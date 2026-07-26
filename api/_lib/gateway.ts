@@ -1,8 +1,8 @@
-import type { DashboardSummary, SubmissionPayloadV1, SubmissionReceipt } from '../../src/types'
-import { validateSubmission } from '../../src/lib/submission'
-import { loadSheetSummary, markSheetSupabaseSynced, writeSheetSubmission } from './googleSheets'
-import { hashCanonicalPayload } from './security'
-import { loadSupabaseSummary, markSupabaseSheetSynced, writeSupabaseSubmission } from './supabase'
+import type { DashboardSummary, SubmissionPayloadV1, SubmissionReceipt } from '../../src/types.js'
+import { validateSubmission } from '../../src/lib/submission.js'
+import { loadSheetSummary, markSheetSupabaseSynced, writeSheetSubmission } from './googleSheets.js'
+import { hashCanonicalPayload } from './security.js'
+import { loadSupabaseSummary, markSupabaseSheetSynced, writeSupabaseSubmission } from './supabase.js'
 
 const withTimeout = async <T>(operation: (signal: AbortSignal) => Promise<T>, milliseconds: number): Promise<T> => {
   const controller = new AbortController()

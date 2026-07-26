@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { CARDS } from '../content/cards'
 import { CATEGORIES, type CardResponse, type Category } from '../types'
@@ -19,6 +21,13 @@ describe('card content', () => {
     expect(new Set(CARDS.map((card) => card.id)).size).toBe(80)
     for (const category of CATEGORIES) {
       expect(CARDS.filter((card) => card.category === category)).toHaveLength(16)
+    }
+  })
+
+  it('maps every card to a real image asset', () => {
+    expect(new Set(CARDS.map((card) => card.image)).size).toBe(80)
+    for (const card of CARDS) {
+      expect(existsSync(join(process.cwd(), 'public', card.image)), card.image).toBe(true)
     }
   })
 })
@@ -49,32 +58,70 @@ describe('calculateResult', () => {
     expect(result.growth).toBe('peace')
   })
 
-  it('returns all-rounder when the five scores are within one point', () => {
+  it('returns balanced only when all five non-zero scores are equal', () => {
+    const result = calculateResult(responsesFor({
+      people: 2,
+      prosperity: 2,
+      planet: 2,
+      peace: 2,
+      partnership: 2,
+    }), 'session-b')
+
+    expect(result.character).toBe('balanced')
+    expect(result.strongest).toBeNull()
+    expect(result.growth).toBeNull()
+  })
+
+  it('does not return balanced when the five scores are merely close', () => {
     const result = calculateResult(responsesFor({
       people: 3,
       prosperity: 3,
       planet: 2,
       peace: 2,
       partnership: 2,
-    }), 'session-b')
+    }), 'session-close')
 
-    expect(result.character).toBe('all-rounder')
-    expect(result.strongest).toBeNull()
-    expect(result.growth).toBeNull()
+    expect(['people', 'prosperity']).toContain(result.character)
+    expect(result.character).not.toBe('balanced')
   })
 
-  it('resolves a partial tie deterministically for a session seed', () => {
-    const answers = responsesFor({
-      people: 3,
-      prosperity: 3,
-      planet: 1,
-      peace: 0,
-      partnership: 1,
-    })
-    const first = calculateResult(answers, 'fixed-seed')
-    const second = calculateResult(answers, 'fixed-seed')
+  it.each([
+    {
+      scores: { people: 3, prosperity: 3, planet: 1, peace: 0, partnership: 1 },
+      expected: ['people', 'prosperity'],
+    },
+    {
+      scores: { people: 3, prosperity: 3, planet: 3, peace: 0, partnership: 1 },
+      expected: ['people', 'prosperity', 'planet'],
+    },
+    {
+      scores: { people: 3, prosperity: 3, planet: 3, peace: 3, partnership: 1 },
+      expected: ['people', 'prosperity', 'planet', 'peace'],
+    },
+  ] as Array<{ scores: Record<Category, number>; expected: Category[] }>)(
+    'randomly resolves a $expected.length-category tie and stays stable for the submission seed',
+    ({ scores, expected }) => {
+      const first = calculateResult(responsesFor(scores), 'fixed-seed')
+      const second = calculateResult(responsesFor(scores), 'fixed-seed')
 
-    expect(['people', 'prosperity']).toContain(first.character)
-    expect(second.character).toBe(first.character)
+      expect(expected).toContain(first.character)
+      expect(second.character).toBe(first.character)
+      expect(second.strongest).toBe(first.strongest)
+    },
+  )
+
+  it('returns no-score when every answer is rejected', () => {
+    const answers = responsesFor({
+      people: 0,
+      prosperity: 0,
+      planet: 0,
+      peace: 0,
+      partnership: 0,
+    })
+    const result = calculateResult(answers, 'session-empty')
+
+    expect(result.character).toBe('no-score')
+    expect(result.strongest).toBeNull()
+    expect(result.growth).toBeNull()
   })
 })

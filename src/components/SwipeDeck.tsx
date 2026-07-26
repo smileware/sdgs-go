@@ -1,5 +1,6 @@
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { balanceCardText } from '../lib/cardText'
 import type { Card } from '../types'
 
 export type SwipeDirection = 'left' | 'right'
@@ -25,6 +26,7 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
   const topCard = cards[0]
   const nextCard = cards[1]
   const thirdCard = cards[2]
+  const textLines = topCard ? balanceCardText(topCard.text) : []
 
   const commitSwipe = (direction: SwipeDirection) => {
     if (leaving) return
@@ -73,12 +75,11 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
         <motion.div className="swipe-stamp swipe-stamp--like" style={{ opacity: likeOpacity }}>รักเลย</motion.div>
         <motion.div className="swipe-stamp swipe-stamp--pass" style={{ opacity: passOpacity }}>อาจจะยัง</motion.div>
         <img className="card-frame" src={`/assets/frame-${topCard.category}.png`} alt="" draggable={false} />
-        {topCard.id === 'people-01' ? (
-          <img className="card-illustration" src="/assets/card-people-sharing.png" alt="" draggable={false} />
-        ) : (
-          <span className="card-icon">{topCard.icon}</span>
-        )}
-        <h2>{topCard.text}</h2>
+        <img className="card-logo" src="/assets/splash-screen.png" alt="" draggable={false} />
+        <img className="card-illustration" src={topCard.image} alt="" draggable={false} />
+        <h2>
+          {textLines.map((line, lineIndex) => <span key={`${lineIndex}-${line}`}>{line}</span>)}
+        </h2>
       </motion.article>
     </div>
   )

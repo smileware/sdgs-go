@@ -1,14 +1,15 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import type { ApiRequest, ApiResponse } from './http'
+import type { ApiRequest, ApiResponse } from './http.js'
 import {
   createAdminSession,
   createPasswordHash,
   hashCanonicalPayload,
+  isAllowedBrowserOrigin,
   requireAdminSession,
   verifyCsrf,
   verifyPassword,
-} from './security'
+} from './security.js'
 
 describe('admin credential security', () => {
   it('creates a salted scrypt password hash', () => {
@@ -35,7 +36,7 @@ describe('admin credential security', () => {
       send: () => undefined,
       end: () => undefined,
     }
-    const created = createAdminSession('admin@example.com', response)
+    const created = createAdminSession('admin', response)
     const setCookie = String(headers.get('Set-Cookie'))
     expect(setCookie).toContain('HttpOnly')
     expect(setCookie).toContain('SameSite=Strict')
@@ -44,7 +45,57 @@ describe('admin credential security', () => {
       headers: { cookie: setCookie.split(';')[0], 'x-csrf-token': created.csrfToken },
     } satisfies ApiRequest
     const verified = requireAdminSession(request, response)
-    expect(verified?.email).toBe('admin@example.com')
+    expect(verified?.username).toBe('admin')
     expect(verified && verifyCsrf(request, verified)).toBe(true)
+  })
+
+  it('allows the exact request origin when no explicit allowlist is configured', () => {
+    delete process.env.PUBLIC_APP_ORIGINS
+    const request = {
+      headers: {
+        origin: 'https://game.example.com',
+        'x-forwarded-proto': 'https',
+        'x-forwarded-host': 'game.example.com',
+      },
+    } satisfies ApiRequest
+
+    expect(isAllowedBrowserOrigin(request)).toBe(true)
+    expect(isAllowedBrowserOrigin({
+      ...request,
+      headers: { ...request.headers, origin: 'https://attacker.example' },
+    })).toBe(false)
+  })
+
+  it('uses the configured cross-origin allowlist when provided', () => {
+    process.env.PUBLIC_APP_ORIGINS = 'https://kiosk.example, https://admin.example'
+    const request = {
+      headers: {
+        origin: 'https://admin.example',
+        host: 'api.example',
+      },
+    } satisfies ApiRequest
+
+    expect(isAllowedBrowserOrigin(request)).toBe(true)
+    expect(isAllowedBrowserOrigin({
+      ...request,
+      headers: { ...request.headers, origin: 'https://attacker.example' },
+    })).toBe(false)
+    expect(isAllowedBrowserOrigin({
+      headers: { origin: 'https://api.example', host: 'api.example', 'x-forwarded-proto': 'https' },
+    })).toBe(true)
+    delete process.env.PUBLIC_APP_ORIGINS
+  })
+
+  it('keeps localhost available during development when production origins are configured', () => {
+    const previousNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    process.env.PUBLIC_APP_ORIGINS = 'https://sdgs-go.vercel.app'
+
+    expect(isAllowedBrowserOrigin({
+      headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
+    })).toBe(true)
+
+    process.env.NODE_ENV = previousNodeEnv
+    delete process.env.PUBLIC_APP_ORIGINS
   })
 })

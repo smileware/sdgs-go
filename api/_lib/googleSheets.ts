@@ -1,6 +1,6 @@
-import type { DashboardSummary, SubmissionPayloadV1 } from '../../src/types'
-import { hasGoogleSheetsConfig, serverConfig } from './env'
-import { createSignedEnvelope } from './security'
+import type { DashboardSummary, SubmissionPayloadV1 } from '../../src/types.js'
+import { hasGoogleSheetsConfig, serverConfig } from './env.js'
+import { createSignedEnvelope } from './security.js'
 
 export interface SheetExportRow {
   submissionId: string

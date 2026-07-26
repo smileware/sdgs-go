@@ -14,10 +14,10 @@ vi.mock('./googleSheets', () => ({
   loadSheetSummary: vi.fn(),
 }))
 
-import { writeSheetSubmission } from './googleSheets'
-import { submitToBothSinks } from './gateway'
-import { writeSupabaseSubmission } from './supabase'
-import { validSubmission } from '../../src/test/fixtures'
+import { writeSheetSubmission } from './googleSheets.js'
+import { submitToBothSinks } from './gateway.js'
+import { writeSupabaseSubmission } from './supabase.js'
+import { validSubmission } from '../../src/test/fixtures.js'
 
 describe('dual-write gateway', () => {
   beforeEach(() => {

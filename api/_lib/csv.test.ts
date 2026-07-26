@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import type { SheetExportRow } from './googleSheets'
-import { exportRowsToCsv } from './csv'
+import type { SheetExportRow } from './googleSheets.js'
+import { exportRowsToCsv } from './csv.js'
 
 const row: SheetExportRow = {
   submissionId: 'submission-1',

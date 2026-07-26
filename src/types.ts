@@ -1,13 +1,14 @@
 export const CATEGORIES = ['people', 'prosperity', 'planet', 'peace', 'partnership'] as const
 
 export type Category = (typeof CATEGORIES)[number]
-export type CharacterKey = Category | 'all-rounder'
+export type CharacterKey = Category | 'balanced' | 'no-score'
 export type Scores = Record<Category, number>
 
 export interface Card {
   id: string
   category: Category
   icon: string
+  image: string
   text: string
 }
 
@@ -42,6 +43,7 @@ export interface CharacterContent {
   strength: string
   advice: string
   icon: string
+  image?: string
   color: string
   softColor: string
 }

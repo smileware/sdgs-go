@@ -65,7 +65,7 @@ Generate a salted scrypt hash:
 npm run admin:hash -- "a-long-unique-admin-password"
 ```
 
-Store the output as `ADMIN_PASSWORD_HASH`. Store the email as `ADMIN_EMAIL` and generate separate random values of at least 32 bytes for `ADMIN_SESSION_SECRET` and `GOOGLE_APPS_SCRIPT_SECRET`.
+Store the output as `ADMIN_PASSWORD_HASH`. Store the login name as `ADMIN_USERNAME` and generate separate random values of at least 32 bytes for `ADMIN_SESSION_SECRET` and `GOOGLE_APPS_SCRIPT_SECRET`.
 
 The shared admin password must not match the Gmail password.
 
@@ -76,8 +76,10 @@ Copy the names from `.env.example` into the Vercel project:
 - Public/build: `VITE_EVENT_SLUG`, `VITE_PRIVACY_VERSION`, `VITE_CARD_SET_VERSION`, `VITE_PUBLIC_GAME_URL`
 - Server-only: `EVENT_SLUG`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - Google backup: `GOOGLE_APPS_SCRIPT_URL`, `GOOGLE_APPS_SCRIPT_SECRET`
-- Admin: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`
-- Security: `PUBLIC_APP_ORIGINS`, as a comma-separated exact-origin allowlist
+- Admin: `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`
+- Security: leave `PUBLIC_APP_ORIGINS` blank for same-origin deployment, or set a comma-separated exact-origin allowlist when the frontend and API are on different origins
+
+`VITE_PUBLIC_GAME_URL` may also remain blank; the result share link then uses the deployed site's current origin.
 
 Production intentionally shows a configuration error when required public configuration is missing.
 
@@ -118,7 +120,7 @@ The in-process limiter is an initial protection for the intended kiosk scale. En
 - Run the 100-submission acceptance load test:
 
 ```bash
-LOAD_TEST_URL=https://<production-domain>/api/submissions npm run load:test
+LOAD_TEST_URL=https://sdgs-go.vercel.app/api/submissions npm run load:test
 ```
 
 ### During the event

@@ -1,9 +1,9 @@
-import { exportRowsToCsv } from '../_lib/csv'
-import { serverConfig } from '../_lib/env'
-import { loadSheetExport } from '../_lib/googleSheets'
-import { methodNotAllowed, noStore, requestIp, type ApiRequest, type ApiResponse } from '../_lib/http'
-import { requireAdminSession, verifyCsrf } from '../_lib/security'
-import { loadSupabaseExport, writeAuditEvent } from '../_lib/supabase'
+import { exportRowsToCsv } from '../_lib/csv.js'
+import { serverConfig } from '../_lib/env.js'
+import { loadSheetExport } from '../_lib/googleSheets.js'
+import { methodNotAllowed, noStore, requestIp, type ApiRequest, type ApiResponse } from '../_lib/http.js'
+import { requireAdminSession, verifyCsrf } from '../_lib/security.js'
+import { loadSupabaseExport, writeAuditEvent } from '../_lib/supabase.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   noStore(response)

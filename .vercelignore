@@ -1,0 +1,9 @@
+.git
+.vercel
+.env*
+.admin-credentials.local.txt
+google-apps-script/script-properties.local.txt
+node_modules
+dist
+coverage
+supabase/.temp

@@ -1,4 +1,4 @@
-import type { SheetExportRow } from './googleSheets'
+import type { SheetExportRow } from './googleSheets.js'
 
 const safeCell = (value: unknown): string => {
   const raw = value == null ? '' : typeof value === 'string' ? value : JSON.stringify(value)

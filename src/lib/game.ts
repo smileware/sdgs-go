@@ -1,4 +1,4 @@
-import { CATEGORIES, type Card, type CardResponse, type Category, type GameResult, type Scores } from '../types'
+import { CATEGORIES, type Card, type CardResponse, type Category, type GameResult, type Scores } from '../types.js'
 
 const shuffle = <T,>(items: T[], random: () => number): T[] => {
   const result = [...items]
@@ -50,14 +50,16 @@ export const calculateResult = (responses: CardResponse[], seed: string): GameRe
   const values = CATEGORIES.map((category) => scores[category])
   const highest = Math.max(...values)
   const lowest = Math.min(...values)
-  const isAllRounder = highest - lowest <= 1
+  const hasNoScore = highest === 0
+  const isBalanced = !hasNoScore && values.every((score) => score === highest)
   const strongestCandidates = CATEGORIES.filter((category) => scores[category] === highest)
   const growthCandidates = CATEGORIES.filter((category) => scores[category] === lowest)
+  const strongest = seededPick(strongestCandidates, `${seed}-strong`)
 
   return {
-    character: isAllRounder ? 'all-rounder' : seededPick(strongestCandidates, `${seed}-strong` )!,
-    strongest: isAllRounder ? null : seededPick(strongestCandidates, `${seed}-strong`),
-    growth: isAllRounder ? null : seededPick(growthCandidates, `${seed}-growth`),
+    character: hasNoScore ? 'no-score' : isBalanced ? 'balanced' : strongest!,
+    strongest: hasNoScore || isBalanced ? null : strongest,
+    growth: hasNoScore || isBalanced ? null : seededPick(growthCandidates, `${seed}-growth`),
     scores,
   }
 }

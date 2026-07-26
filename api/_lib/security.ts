@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
-import type { ApiRequest, ApiResponse } from './http'
-import { header } from './http'
-import { serverConfig } from './env'
+import type { ApiRequest, ApiResponse } from './http.js'
+import { header } from './http.js'
+import { serverConfig } from './env.js'
 
 const SESSION_COOKIE = 'sustrend_admin'
 const SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000
@@ -9,7 +9,7 @@ const IDLE_LIFETIME_MS = 30 * 60 * 1000
 const loginAttempts = new Map<string, number[]>()
 
 interface SessionPayload {
-  email: string
+  username: string
   issuedAt: number
   expiresAt: number
   lastActivityAt: number
@@ -84,10 +84,10 @@ const setSessionCookie = (response: ApiResponse, payload: SessionPayload) => {
   )
 }
 
-export const createAdminSession = (email: string, response: ApiResponse): SessionPayload => {
+export const createAdminSession = (username: string, response: ApiResponse): SessionPayload => {
   const now = Date.now()
   const payload: SessionPayload = {
-    email,
+    username,
     issuedAt: now,
     expiresAt: now + SESSION_LIFETIME_MS,
     lastActivityAt: now,
@@ -165,6 +165,13 @@ export const isAllowedBrowserOrigin = (request: ApiRequest): boolean => {
   const origin = header(request, 'origin')
   if (!origin) return true
   const configured = serverConfig().allowedOrigins
-  if (!configured.length && process.env.NODE_ENV !== 'production') return /^https?:\/\/localhost(?::\d+)?$/.test(origin)
-  return configured.includes(origin)
+  if (configured.includes(origin)) return true
+
+  const forwardedProto = header(request, 'x-forwarded-proto').split(',')[0]?.trim()
+  const forwardedHost = header(request, 'x-forwarded-host').split(',')[0]?.trim()
+  const host = forwardedHost || header(request, 'host').split(',')[0]?.trim()
+  const protocol = forwardedProto || (process.env.NODE_ENV === 'production' ? 'https' : 'http')
+
+  if (host && origin === `${protocol}://${host}`) return true
+  return process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(?::\d+)?$/.test(origin)
 }

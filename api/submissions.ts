@@ -1,7 +1,7 @@
-import { isAllowedBrowserOrigin } from './_lib/security'
-import { methodNotAllowed, noStore, parseJsonBody, requestIp, type ApiRequest, type ApiResponse } from './_lib/http'
-import { submitToBothSinks } from './_lib/gateway'
-import { consumeSubmissionLimit } from './_lib/rateLimit'
+import { isAllowedBrowserOrigin } from './_lib/security.js'
+import { methodNotAllowed, noStore, parseJsonBody, requestIp, type ApiRequest, type ApiResponse } from './_lib/http.js'
+import { submitToBothSinks } from './_lib/gateway.js'
+import { consumeSubmissionLimit } from './_lib/rateLimit.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   noStore(response)

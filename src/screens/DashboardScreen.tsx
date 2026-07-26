@@ -21,7 +21,7 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [csrfToken, setCsrfToken] = useState('')
   const [error, setError] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(emptySyncStatus)
@@ -60,7 +60,7 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ username: username.trim(), password }),
       })
       const body = await response.json().catch(() => ({})) as { csrfToken?: string; error?: string }
       if (!response.ok) throw new Error(body.error || 'login failed')
@@ -68,7 +68,7 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
       setPassword('')
       await load()
     } catch {
-      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือมีการลองเข้าสู่ระบบมากเกินไป')
+      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือมีการลองเข้าสู่ระบบมากเกินไป')
     } finally {
       setBusy(false)
     }
@@ -123,8 +123,8 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
           <h1>เข้าสู่ระบบทีมงาน</h1>
           <p>ใช้บัญชีกลางที่กำหนดไว้สำหรับดูสรุปและส่งออกข้อมูล</p>
           <label>
-            <span>อีเมล</span>
-            <input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
+            <span>ชื่อผู้ใช้</span>
+            <input type="text" autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} />
           </label>
           <label>
             <span>รหัสผ่าน</span>
@@ -201,7 +201,9 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
                   const character = CHARACTERS[item.character]
                   return (
                     <div className="distribution-row" key={item.character}>
-                      <div className="distribution-icon" style={{ background: character.softColor }}>{character.icon}</div>
+                      <div className="distribution-icon" style={{ background: character.softColor }}>
+                        {character.image ? <img src={character.image} alt="" /> : character.icon}
+                      </div>
                       <div className="distribution-copy">
                         <div><b>{character.name}</b><span>{item.count} คน · {item.percentage}%</span></div>
                         <div className="distribution-track"><i style={{ width: `${item.percentage}%`, background: character.color }} /></div>

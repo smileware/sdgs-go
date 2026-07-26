@@ -1,7 +1,7 @@
-import { serverConfig } from '../_lib/env'
-import { loadDashboardWithFallback } from '../_lib/gateway'
-import { methodNotAllowed, noStore, type ApiRequest, type ApiResponse } from '../_lib/http'
-import { requireAdminSession } from '../_lib/security'
+import { serverConfig } from '../_lib/env.js'
+import { loadDashboardWithFallback } from '../_lib/gateway.js'
+import { methodNotAllowed, noStore, type ApiRequest, type ApiResponse } from '../_lib/http.js'
+import { requireAdminSession } from '../_lib/security.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   noStore(response)

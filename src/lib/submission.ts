@@ -1,7 +1,7 @@
-import { CARDS } from '../content/cards'
-import type { CardResponse, PlayerDraft, SubmissionPayloadV1 } from '../types'
-import { CATEGORIES } from '../types'
-import { calculateResult } from './game'
+import { CARDS } from '../content/cards.js'
+import type { CardResponse, PlayerDraft, SubmissionPayloadV1 } from '../types.js'
+import { CATEGORIES } from '../types.js'
+import { calculateResult } from './game.js'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const EVENT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/

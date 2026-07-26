@@ -2,8 +2,13 @@ node_modules
 dist
 .env
 .env.local
+.env.vercel.local
+.admin-credentials.local.txt
+google-apps-script/script-properties.local.txt
 .DS_Store
 coverage
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+.vercel
+.env*

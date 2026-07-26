@@ -5,7 +5,7 @@ export const serverConfig = () => ({
   supabaseServiceRoleKey: value('SUPABASE_SERVICE_ROLE_KEY'),
   googleAppsScriptUrl: value('GOOGLE_APPS_SCRIPT_URL'),
   googleAppsScriptSecret: value('GOOGLE_APPS_SCRIPT_SECRET'),
-  adminEmail: value('ADMIN_EMAIL').toLowerCase(),
+  adminUsername: (value('ADMIN_USERNAME') || value('ADMIN_EMAIL')).toLowerCase(),
   adminPasswordHash: value('ADMIN_PASSWORD_HASH'),
   adminSessionSecret: value('ADMIN_SESSION_SECRET'),
   eventSlug: value('EVENT_SLUG') || value('VITE_EVENT_SLUG') || 'local-demo',

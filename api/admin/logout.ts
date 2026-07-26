@@ -1,5 +1,5 @@
-import { clearAdminSession, requireAdminSession, verifyCsrf } from '../_lib/security'
-import { methodNotAllowed, noStore, type ApiRequest, type ApiResponse } from '../_lib/http'
+import { clearAdminSession, requireAdminSession, verifyCsrf } from '../_lib/security.js'
+import { methodNotAllowed, noStore, type ApiRequest, type ApiResponse } from '../_lib/http.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   noStore(response)

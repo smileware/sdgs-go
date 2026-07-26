@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
-import type { DashboardSummary, SubmissionPayloadV1 } from '../../src/types'
-import type { SheetExportRow } from './googleSheets'
-import { hasSupabaseConfig, serverConfig } from './env'
+import type { DashboardSummary, SubmissionPayloadV1 } from '../../src/types.js'
+import type { SheetExportRow } from './googleSheets.js'
+import { hasSupabaseConfig, serverConfig } from './env.js'
 
 const client = () => {
   if (!hasSupabaseConfig()) throw new Error('supabase_not_configured')

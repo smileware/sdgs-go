@@ -5,7 +5,7 @@
 3. Add Script Properties:
    - `SPREADSHEET_ID`: ID from the Sheet URL.
    - `SHARED_SECRET`: the same random 32+ byte secret stored as `GOOGLE_APPS_SCRIPT_SECRET` in Vercel.
-   - `RECONCILE_URL`: `https://<production-domain>/api/internal/reconcile`.
+   - `RECONCILE_URL`: `https://sdgs-go.vercel.app/api/internal/reconcile`.
 4. Run `setup()` once and approve the requested permissions.
 5. Deploy as a Web App:
    - Execute as: **Me**

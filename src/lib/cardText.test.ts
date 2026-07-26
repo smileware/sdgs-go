@@ -1,0 +1,22 @@
+import { describe, expect, it } from 'vitest'
+import { balanceCardText } from './cardText'
+
+describe('balanceCardText', () => {
+  it('avoids leaving a short Thai word alone on the final line', () => {
+    expect(balanceCardText('ชวนเพื่อนมาร่วมโครงการอาสา')).toEqual([
+      'ชวนเพื่อนมาร่วม',
+      'โครงการอาสา',
+    ])
+  })
+
+  it('keeps short copy on one centered line', () => {
+    expect(balanceCardText('บริจาคเลือด')).toEqual(['บริจาคเลือด'])
+  })
+
+  it('uses at most four balanced lines for long copy', () => {
+    const lines = balanceCardText('หยุดรถทางม้าลายสม่ำเสมอแม้ไม่มีคนรอข้าม')
+    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.length).toBeLessThanOrEqual(4)
+    expect(lines.every(Boolean)).toBe(true)
+  })
+})

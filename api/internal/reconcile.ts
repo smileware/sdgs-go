@@ -2,14 +2,14 @@ import {
   batchWriteSheetSubmissions,
   loadSheetPendingSupabase,
   markSheetSupabaseSynced,
-} from '../_lib/googleSheets'
-import { methodNotAllowed, noStore, parseJsonBody, type ApiRequest, type ApiResponse } from '../_lib/http'
-import { verifySignedEnvelope } from '../_lib/security'
+} from '../_lib/googleSheets.js'
+import { methodNotAllowed, noStore, parseJsonBody, type ApiRequest, type ApiResponse } from '../_lib/http.js'
+import { verifySignedEnvelope } from '../_lib/security.js'
 import {
   loadSupabasePendingSheet,
   markSupabaseSheetSynced,
   writeSupabaseSubmission,
-} from '../_lib/supabase'
+} from '../_lib/supabase.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   noStore(response)
