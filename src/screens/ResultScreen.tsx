@@ -10,6 +10,27 @@ const SHARE_PLATFORMS = [
   { key: 'x', label: 'X', icon: '/assets/social/x.svg' },
 ] as const
 
+const blobToDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(String(reader.result))
+  reader.onerror = () => reject(reader.error ?? new Error('Unable to read image'))
+  reader.readAsDataURL(blob)
+})
+
+const waitForPaint = () => new Promise<void>((resolve) => {
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))
+})
+
+const canShareImageFile = (file: File): boolean => {
+  try {
+    const shareData = { files: [file] }
+    return Boolean(navigator.share)
+      && (!navigator.canShare || navigator.canShare(shareData))
+  } catch {
+    return false
+  }
+}
+
 export function ResultScreen({
   nickname,
   result,
@@ -34,16 +55,45 @@ export function ResultScreen({
   const buildImage = async (): Promise<{ dataUrl: string; file: File }> => {
     if (!cardRef.current) throw new Error('Result card unavailable')
     await document.fonts?.ready
-    await Promise.all(
-      Array.from(cardRef.current.querySelectorAll('img')).map((image) => (
-        image.decode ? image.decode().catch(() => undefined) : Promise.resolve()
-      )),
-    )
-    const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true, backgroundColor: '#faf2e8' })
-    const blob = await (await fetch(dataUrl)).blob()
-    return {
-      dataUrl,
-      file: new File([blob], `sustrend-${result.character}.png`, { type: 'image/png' }),
+
+    const sourceRect = cardRef.current.getBoundingClientRect()
+    const captureHost = document.createElement('div')
+    const captureNode = cardRef.current.cloneNode(true) as HTMLDivElement
+    captureNode.removeAttribute('aria-label')
+    captureNode.setAttribute('aria-hidden', 'true')
+    captureNode.style.width = `${sourceRect.width}px`
+    captureHost.style.position = 'fixed'
+    captureHost.style.top = '0'
+    captureHost.style.left = `${-(Math.ceil(sourceRect.width) + 100)}px`
+    captureHost.style.width = `${sourceRect.width}px`
+    captureHost.style.pointerEvents = 'none'
+    captureHost.appendChild(captureNode)
+    document.body.appendChild(captureHost)
+
+    try {
+      const images = Array.from(captureNode.querySelectorAll('img'))
+      await Promise.all(images.map(async (image) => {
+        const source = image.getAttribute('src') || image.currentSrc || image.src
+        if (!source || source.startsWith('data:')) return
+        const response = await fetch(new URL(source, window.location.href), { cache: 'force-cache' })
+        if (!response.ok) throw new Error(`Unable to load export image: ${response.status}`)
+        image.src = await blobToDataUrl(await response.blob())
+        if (image.decode) await image.decode()
+      }))
+      await waitForPaint()
+
+      const dataUrl = await toPng(captureNode, {
+        pixelRatio: 2,
+        cacheBust: false,
+        backgroundColor: '#faf2e8',
+      })
+      const blob = await (await fetch(dataUrl)).blob()
+      return {
+        dataUrl,
+        file: new File([blob], `sustrend-${result.character}.png`, { type: 'image/png' }),
+      }
+    } finally {
+      captureHost.remove()
     }
   }
 
@@ -70,15 +120,49 @@ export function ResultScreen({
 
   const savePreparedImage = () => {
     if (!preparedImage) return
+    const objectUrl = URL.createObjectURL(preparedImage.file)
     const link = document.createElement('a')
     link.download = preparedImage.file.name
-    link.href = preparedImage.dataUrl
+    link.href = objectUrl
+    link.rel = 'noopener'
+    document.body.appendChild(link)
     link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000)
   }
 
-  const downloadImage = () => {
-    savePreparedImage()
-    setShareMessage('บันทึกภาพแล้ว')
+  const saveImageToPhotos = async () => {
+    if (!preparedImage) return
+    setSharing(true)
+    setShareMessage('')
+
+    try {
+      const shareData = { files: [preparedImage.file] }
+      const canOpenPhotoSave = canShareImageFile(preparedImage.file)
+
+      if (navigator.share && canOpenPhotoSave) {
+        setShareMessage('เลือก “บันทึกรูปภาพ” หรือ “Add to Photos”')
+        const outcome = await Promise.race([
+          navigator.share(shareData).then(() => 'closed' as const),
+          new Promise<'pending'>((resolve) => window.setTimeout(() => resolve('pending'), 12_000)),
+        ])
+        setShareMessage(outcome === 'closed'
+          ? 'ปิดเมนูบันทึกรูปแล้ว'
+          : 'เลือก “บันทึกรูปภาพ” หรือ “Add to Photos”')
+      } else {
+        savePreparedImage()
+        setShareMessage('อุปกรณ์นี้ไม่รองรับการบันทึกลงคลังรูป จึงดาวน์โหลด PNG ให้แทน')
+      }
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        setShareMessage('ยกเลิกการบันทึกภาพ')
+      } else {
+        savePreparedImage()
+        setShareMessage('เปิดคลังรูปไม่ได้ จึงดาวน์โหลด PNG ให้แทน')
+      }
+    } finally {
+      setSharing(false)
+    }
   }
 
   const shareImage = async (platform: string) => {
@@ -87,13 +171,19 @@ export function ResultScreen({
     setShareMessage('')
     try {
       const shareData = { files: [preparedImage.file] }
+      const canShareFile = canShareImageFile(preparedImage.file)
 
-      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
-        await navigator.share(shareData)
-        setShareMessage(`แชร์ภาพผ่าน ${platform} แล้ว`)
+      if (navigator.share && canShareFile) {
+        const outcome = await Promise.race([
+          navigator.share(shareData).then(() => 'shared' as const),
+          new Promise<'pending'>((resolve) => window.setTimeout(() => resolve('pending'), 12_000)),
+        ])
+        setShareMessage(outcome === 'shared'
+          ? 'แชร์ภาพแล้ว'
+          : 'เปิดหน้าต่างแชร์แล้ว กรุณาเลือกแอปที่ต้องการ')
       } else {
         savePreparedImage()
-        setShareMessage(`บันทึกภาพแล้ว สามารถนำไปแชร์ผ่าน ${platform} ได้`)
+        setShareMessage(`อุปกรณ์นี้เปิด ${platform} โดยตรงไม่ได้ จึงบันทึกภาพให้แล้ว`)
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -199,7 +289,7 @@ export function ResultScreen({
           </div>
           {shareMessage && <p className="share-message" role="status">{shareMessage}</p>}
         </section>
-        <button className="figma-button" onClick={downloadImage} disabled={!preparedImage || sharing}>
+        <button className="figma-button" onClick={() => void saveImageToPhotos()} disabled={!preparedImage || sharing}>
           {!preparedImage ? 'กำลังสร้างภาพ…' : 'บันทึกภาพ'}
         </button>
         <button className="figma-button figma-button--outline" onClick={onReplay} disabled={sharing}>

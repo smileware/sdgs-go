@@ -28,6 +28,20 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
   const thirdCard = cards[2]
   const textLines = topCard ? balanceCardText(topCard.text) : []
 
+  useEffect(() => {
+    const sources = new Set<string>(['/assets/splash-screen.png'])
+    cards.forEach((card) => {
+      sources.add(card.image)
+      sources.add(`/assets/frame-${card.category}.png`)
+    })
+
+    sources.forEach((source) => {
+      const image = new Image()
+      image.src = source
+      void image.decode?.().catch(() => undefined)
+    })
+  }, [cards])
+
   const commitSwipe = (direction: SwipeDirection) => {
     if (leaving) return
     setLeaving(true)
@@ -57,6 +71,7 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
       {thirdCard && <div className="swipe-card swipe-card--third" aria-hidden="true" />}
       {nextCard && <motion.div className="swipe-card swipe-card--next" style={{ scale: nextScale, y: nextY }} aria-hidden="true" />}
       <motion.article
+        key={topCard.id}
         className="swipe-card swipe-card--active"
         style={{ x, rotate }}
         drag={leaving ? false : 'x'}

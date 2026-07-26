@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sustrend-kiosk-v1'
+const CACHE_NAME = 'sustrend-mobile-v2'
 const PRECACHE = [
   '/',
   '/index.html',
