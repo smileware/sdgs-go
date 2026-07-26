@@ -21,6 +21,99 @@ const waitForPaint = () => new Promise<void>((resolve) => {
   window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))
 })
 
+const loadImage = (source: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+  const image = new Image()
+  image.onload = () => resolve(image)
+  image.onerror = () => reject(new Error('Unable to decode export image'))
+  image.src = source
+})
+
+const numericStyle = (value: string): number => {
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const drawExportImage = (
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  captureRect: DOMRect,
+  scaleX: number,
+  scaleY: number,
+) => {
+  const rect = image.getBoundingClientRect()
+  const style = window.getComputedStyle(image)
+  if (
+    rect.width <= 0
+    || rect.height <= 0
+    || image.naturalWidth <= 0
+    || image.naturalHeight <= 0
+    || style.display === 'none'
+    || style.visibility === 'hidden'
+  ) return
+
+  const paddingLeft = numericStyle(style.paddingLeft)
+  const paddingRight = numericStyle(style.paddingRight)
+  const paddingTop = numericStyle(style.paddingTop)
+  const paddingBottom = numericStyle(style.paddingBottom)
+  const contentWidth = Math.max(0, rect.width - paddingLeft - paddingRight)
+  const contentHeight = Math.max(0, rect.height - paddingTop - paddingBottom)
+  if (!contentWidth || !contentHeight) return
+
+  let drawWidth = contentWidth
+  let drawHeight = contentHeight
+  if (style.objectFit === 'contain' || style.objectFit === 'scale-down') {
+    const ratio = Math.min(
+      contentWidth / image.naturalWidth,
+      contentHeight / image.naturalHeight,
+      style.objectFit === 'scale-down' ? 1 : Number.POSITIVE_INFINITY,
+    )
+    drawWidth = image.naturalWidth * ratio
+    drawHeight = image.naturalHeight * ratio
+  } else if (style.objectFit === 'cover') {
+    const ratio = Math.max(
+      contentWidth / image.naturalWidth,
+      contentHeight / image.naturalHeight,
+    )
+    drawWidth = image.naturalWidth * ratio
+    drawHeight = image.naturalHeight * ratio
+  }
+
+  const x = rect.left - captureRect.left + paddingLeft + ((contentWidth - drawWidth) / 2)
+  const y = rect.top - captureRect.top + paddingTop + ((contentHeight - drawHeight) / 2)
+  context.save()
+  context.globalAlpha = numericStyle(style.opacity) || 1
+  context.drawImage(
+    image,
+    x * scaleX,
+    y * scaleY,
+    drawWidth * scaleX,
+    drawHeight * scaleY,
+  )
+  context.restore()
+}
+
+const compositeExportImages = async (
+  baseDataUrl: string,
+  captureNode: HTMLElement,
+  images: HTMLImageElement[],
+): Promise<string> => {
+  const baseImage = await loadImage(baseDataUrl)
+  const captureRect = captureNode.getBoundingClientRect()
+  if (!captureRect.width || !captureRect.height) throw new Error('Invalid export dimensions')
+
+  const canvas = document.createElement('canvas')
+  canvas.width = baseImage.naturalWidth
+  canvas.height = baseImage.naturalHeight
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('Canvas is unavailable')
+
+  context.drawImage(baseImage, 0, 0)
+  const scaleX = canvas.width / captureRect.width
+  const scaleY = canvas.height / captureRect.height
+  images.forEach((image) => drawExportImage(context, image, captureRect, scaleX, scaleY))
+  return canvas.toDataURL('image/png')
+}
+
 const canShareImageFile = (file: File): boolean => {
   try {
     const shareData = { files: [file] }
@@ -82,11 +175,13 @@ export function ResultScreen({
       }))
       await waitForPaint()
 
-      const dataUrl = await toPng(captureNode, {
+      const baseDataUrl = await toPng(captureNode, {
         pixelRatio: 2,
         cacheBust: false,
         backgroundColor: '#faf2e8',
+        filter: (node) => !(node instanceof HTMLImageElement),
       })
+      const dataUrl = await compositeExportImages(baseDataUrl, captureNode, images)
       const blob = await (await fetch(dataUrl)).blob()
       return {
         dataUrl,
@@ -133,6 +228,11 @@ export function ResultScreen({
 
   const saveImageToPhotos = async () => {
     if (!preparedImage) return
+    if (import.meta.env.DEV) {
+      savePreparedImage()
+      setShareMessage('บันทึก PNG สำหรับทดสอบแล้ว')
+      return
+    }
     setSharing(true)
     setShareMessage('')
 
