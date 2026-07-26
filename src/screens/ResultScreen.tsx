@@ -1,7 +1,8 @@
 import { toPng } from 'html-to-image'
 import { useEffect, useRef, useState } from 'react'
 import { CHARACTERS } from '../content/results'
-import type { GameResult } from '../types'
+import { PLAYER_COPY } from '../content/translations'
+import type { GameResult, Language } from '../types'
 
 const SHARE_PLATFORMS = [
   { key: 'facebook', label: 'Facebook', icon: '/assets/social/facebook.svg' },
@@ -125,25 +126,34 @@ const canShareImageFile = (file: File): boolean => {
 }
 
 export function ResultScreen({
+  language,
   nickname,
   result,
   onReplay,
   onHome,
 }: {
+  language: Language
   nickname: string
   result: GameResult
   onReplay: () => void
   onHome: () => void
 }) {
+  const copy = PLAYER_COPY[language].result
   const cardRef = useRef<HTMLDivElement>(null)
   const [sharing, setSharing] = useState(false)
   const [shareMessage, setShareMessage] = useState('')
   const [preparedImage, setPreparedImage] = useState<{ dataUrl: string; file: File } | null>(null)
-  const character = CHARACTERS[result.character]
+  const characterDefinition = CHARACTERS[result.character]
+  const character = language === 'th'
+    ? characterDefinition
+    : { ...characterDefinition, ...characterDefinition.en }
   const isBalanced = result.character === 'balanced'
   const hasNoScore = result.character === 'no-score'
   const balancedCharacters = (['people', 'prosperity', 'planet', 'peace', 'partnership'] as const)
-    .map((key) => CHARACTERS[key])
+    .map((key) => {
+      const item = CHARACTERS[key]
+      return language === 'th' ? item : { ...item, ...item.en }
+    })
 
   const buildImage = async (): Promise<{ dataUrl: string; file: File }> => {
     if (!cardRef.current) throw new Error('Result card unavailable')
@@ -203,7 +213,7 @@ export function ResultScreen({
           if (active) setPreparedImage(image)
         })
         .catch(() => {
-          if (active) setShareMessage('ไม่สามารถสร้างภาพผลลัพธ์ได้ กรุณาลองใหม่')
+          if (active) setShareMessage(copy.imageError)
         })
     })
 
@@ -211,7 +221,7 @@ export function ResultScreen({
       active = false
       window.cancelAnimationFrame(frame)
     }
-  }, [result.character])
+  }, [language, result.character])
 
   const savePreparedImage = () => {
     if (!preparedImage) return
@@ -230,7 +240,7 @@ export function ResultScreen({
     if (!preparedImage) return
     if (import.meta.env.DEV) {
       savePreparedImage()
-      setShareMessage('บันทึก PNG สำหรับทดสอบแล้ว')
+      setShareMessage(copy.devSaved)
       return
     }
     setSharing(true)
@@ -241,24 +251,24 @@ export function ResultScreen({
       const canOpenPhotoSave = canShareImageFile(preparedImage.file)
 
       if (navigator.share && canOpenPhotoSave) {
-        setShareMessage('เลือก “บันทึกรูปภาพ” หรือ “Add to Photos”')
+        setShareMessage(copy.choosePhotoSave)
         const outcome = await Promise.race([
           navigator.share(shareData).then(() => 'closed' as const),
           new Promise<'pending'>((resolve) => window.setTimeout(() => resolve('pending'), 12_000)),
         ])
         setShareMessage(outcome === 'closed'
-          ? 'ปิดเมนูบันทึกรูปแล้ว'
-          : 'เลือก “บันทึกรูปภาพ” หรือ “Add to Photos”')
+          ? copy.photoMenuClosed
+          : copy.choosePhotoSave)
       } else {
         savePreparedImage()
-        setShareMessage('อุปกรณ์นี้ไม่รองรับการบันทึกลงคลังรูป จึงดาวน์โหลด PNG ให้แทน')
+        setShareMessage(copy.photoUnsupported)
       }
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
-        setShareMessage('ยกเลิกการบันทึกภาพ')
+        setShareMessage(copy.saveCancelled)
       } else {
         savePreparedImage()
-        setShareMessage('เปิดคลังรูปไม่ได้ จึงดาวน์โหลด PNG ให้แทน')
+        setShareMessage(copy.photoOpenFailed)
       }
     } finally {
       setSharing(false)
@@ -279,16 +289,16 @@ export function ResultScreen({
           new Promise<'pending'>((resolve) => window.setTimeout(() => resolve('pending'), 12_000)),
         ])
         setShareMessage(outcome === 'shared'
-          ? 'แชร์ภาพแล้ว'
-          : 'เปิดหน้าต่างแชร์แล้ว กรุณาเลือกแอปที่ต้องการ')
+          ? copy.shared
+          : copy.shareOpened)
       } else {
         savePreparedImage()
-        setShareMessage(`อุปกรณ์นี้เปิด ${platform} โดยตรงไม่ได้ จึงบันทึกภาพให้แล้ว`)
+        setShareMessage(copy.platformUnsupported(platform))
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         savePreparedImage()
-        setShareMessage('เปิดการแชร์ไม่ได้ จึงบันทึกภาพให้แทน')
+        setShareMessage(copy.shareFailed)
       }
     } finally {
       setSharing(false)
@@ -300,9 +310,9 @@ export function ResultScreen({
       <div
         className="result-export"
         ref={cardRef}
-        aria-label={`ผลลัพธ์ของ ${nickname}`}
+        aria-label={copy.resultFor(nickname)}
       >
-        <button className="result-logo-button" onClick={onHome} aria-label="กลับหน้าแรก">
+        <button className="result-logo-button" onClick={onHome} aria-label={copy.home}>
           <img src="/assets/splash-screen.png" alt="" />
         </button>
 
@@ -311,24 +321,20 @@ export function ResultScreen({
           style={{ '--character': character.color, '--character-soft': character.softColor } as React.CSSProperties}
         >
           <div className="result-heading">
-            <p className="you-are">คุณคือ...</p>
+            <p className="you-are">{copy.youAre}</p>
             <h1
               className={isBalanced ? 'balanced-title' : undefined}
               aria-label={isBalanced ? character.name : undefined}
             >
               {isBalanced ? (
                 <>
-                  <span>ผู้</span>
-                  <span>สมดุล</span>
-                  <span>ใน</span>
-                  <span>ทุก</span>
-                  <span>ด้าน</span>
+                  {copy.balancedTitleParts.map((part) => <span key={part}>{part}</span>)}
                 </>
               ) : character.name}
             </h1>
           </div>
           {hasNoScore ? null : isBalanced ? (
-            <div className="balanced-orbit" aria-label="สมดุลทั้ง 5 ด้าน">
+            <div className="balanced-orbit" aria-label={copy.balancedAria}>
               {balancedCharacters.map((item) => (
                 <span
                   key={item.key}
@@ -356,11 +362,11 @@ export function ResultScreen({
           {hasNoScore || isBalanced ? null : (
             <>
               <div className="insight insight--strength">
-                <b>จุดแข็ง</b>
+                <b>{copy.strength}</b>
                 <p>{character.strength}</p>
               </div>
               <div className="insight">
-                <b>จุดอ่อน</b>
+                <b>{copy.weakness}</b>
                 <p>{character.advice}</p>
               </div>
             </>
@@ -370,14 +376,14 @@ export function ResultScreen({
 
       <div className="result-actions">
         <section className="social-share" aria-labelledby="share-heading">
-          <h2 id="share-heading">แชร์ไปยัง</h2>
+          <h2 id="share-heading">{copy.shareHeading}</h2>
           <div className="social-share-buttons">
             {SHARE_PLATFORMS.map((platform) => (
               <button
                 key={platform.key}
                 className={`social-share-button social-share-button--${platform.key}`}
                 type="button"
-                aria-label={`แชร์ภาพไปยัง ${platform.label}`}
+                aria-label={copy.shareTo(platform.label)}
                 onClick={() => void shareImage(platform.label)}
                 disabled={!preparedImage || sharing}
               >
@@ -389,11 +395,11 @@ export function ResultScreen({
           </div>
           {shareMessage && <p className="share-message" role="status">{shareMessage}</p>}
         </section>
-        <button className="figma-button" onClick={() => void saveImageToPhotos()} disabled={!preparedImage || sharing}>
-          {!preparedImage ? 'กำลังสร้างภาพ…' : 'บันทึกภาพ'}
-        </button>
+        {/* <button className="figma-button" onClick={() => void saveImageToPhotos()} disabled={!preparedImage || sharing}>
+          {!preparedImage ? copy.creatingImage : copy.saveImage}
+        </button> */}
         <button className="figma-button figma-button--outline" onClick={onReplay} disabled={sharing}>
-          เล่นอีกครั้ง
+          {copy.replay}
         </button>
       </div>
     </main>

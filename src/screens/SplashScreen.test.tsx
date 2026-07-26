@@ -11,7 +11,7 @@ describe('SplashScreen', () => {
     vi.useFakeTimers()
     const onComplete = vi.fn()
 
-    render(<SplashScreen onComplete={onComplete} />)
+    render(<SplashScreen language="th" onComplete={onComplete} />)
 
     act(() => vi.advanceTimersByTime(2599))
     expect(onComplete).not.toHaveBeenCalled()

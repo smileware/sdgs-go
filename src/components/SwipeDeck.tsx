@@ -1,11 +1,13 @@
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { PLAYER_COPY } from '../content/translations'
 import { balanceCardText } from '../lib/cardText'
-import type { Card } from '../types'
+import type { Card, Language } from '../types'
 
 export type SwipeDirection = 'left' | 'right'
 
 interface SwipeDeckProps {
+  language: Language
   cards: Card[]
   forcedSwipe: { direction: SwipeDirection; token: number } | null
   onSwipe: (direction: SwipeDirection) => void
@@ -14,7 +16,7 @@ interface SwipeDeckProps {
 const DISTANCE_THRESHOLD = 88
 const VELOCITY_THRESHOLD = 650
 
-export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
+export function SwipeDeck({ language, cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-300, 0, 300], [-14, 0, 14])
   const likeOpacity = useTransform(x, [20, 130], [0, 1])
@@ -26,7 +28,9 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
   const topCard = cards[0]
   const nextCard = cards[1]
   const thirdCard = cards[2]
-  const textLines = topCard ? balanceCardText(topCard.text) : []
+  const copy = PLAYER_COPY[language].game
+  const cardText = topCard ? (language === 'th' ? topCard.text : topCard.textEn) : ''
+  const textLines = topCard ? balanceCardText(cardText, language) : []
 
   useEffect(() => {
     const sources = new Set<string>(['/assets/splash-screen.png'])
@@ -87,8 +91,8 @@ export function SwipeDeck({ cards, forcedSwipe, onSwipe }: SwipeDeckProps) {
           else animate(x, 0, { type: 'spring', stiffness: 520, damping: 34 })
         }}
       >
-        <motion.div className="swipe-stamp swipe-stamp--like" style={{ opacity: likeOpacity }}>รักเลย</motion.div>
-        <motion.div className="swipe-stamp swipe-stamp--pass" style={{ opacity: passOpacity }}>อาจจะยัง</motion.div>
+        <motion.div className="swipe-stamp swipe-stamp--like" style={{ opacity: likeOpacity }}>{copy.like}</motion.div>
+        <motion.div className="swipe-stamp swipe-stamp--pass" style={{ opacity: passOpacity }}>{copy.pass}</motion.div>
         <img className="card-frame" src={`/assets/frame-${topCard.category}.png`} alt="" draggable={false} />
         <img className="card-logo" src="/assets/splash-screen.png" alt="" draggable={false} />
         <img className="card-illustration" src={topCard.image} alt="" draggable={false} />

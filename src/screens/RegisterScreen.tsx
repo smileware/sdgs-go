@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Check } from 'lucide-react'
+import { PLAYER_COPY } from '../content/translations'
 import { isValidPhone, normalizePlayerDraft } from '../lib/submission'
-import type { PlayerDraft } from '../types'
+import type { Language, PlayerDraft } from '../types'
 
 const initialDraft: PlayerDraft = {
   nickname: '',
@@ -13,12 +14,15 @@ const initialDraft: PlayerDraft = {
 }
 
 export function RegisterScreen({
+  language,
   onBack,
   onSubmit,
 }: {
+  language: Language
   onBack: () => void
   onSubmit: (draft: PlayerDraft) => Promise<void>
 }) {
+  const copy = PLAYER_COPY[language].register
   const [draft, setDraft] = useState(initialDraft)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -34,59 +38,59 @@ export function RegisterScreen({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!draft.privacyAccepted) return setError('กรุณายอมรับนโยบายความเป็นส่วนตัวก่อนเริ่มเกม')
-    if (!isValidPhone(draft.phone)) return setError('กรุณาตรวจสอบรูปแบบเบอร์โทรศัพท์')
+    if (!draft.privacyAccepted) return setError(copy.consentError)
+    if (!isValidPhone(draft.phone)) return setError(copy.phoneError)
     setError('')
     setSubmitting(true)
     try {
       await onSubmit(normalizePlayerDraft(draft))
     } catch {
-      setError('บันทึกข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง')
+      setError(copy.submitError)
       setSubmitting(false)
     }
   }
 
   return (
-    <main className="register-screen">
-      <button className="sr-only" onClick={onBack}>ย้อนกลับ</button>
+    <main className="register-screen" data-language={language}>
+      <button className="sr-only" onClick={onBack}>{copy.back}</button>
       <img className="nesdc-logo" src="/assets/nesdc-logo.png" alt="NESDC" />
       <div className="register-scroll">
         <header className="register-heading">
-          <p>รักอะไรอยู่?</p>
-          <h1>Swipe <span>สิ่งที่คุณรัก</span></h1>
+          <p>{copy.eyebrow}</p>
+          <h1>{copy.headingPrefix} <span>{copy.headingHighlight}</span></h1>
         </header>
 
         <img className="register-art" src="/assets/form-cards.png" alt="" aria-hidden="true" />
 
         <form onSubmit={submit} className="player-form">
           <section className="form-card">
-            <h2>ทำความรู้จักกันก่อนนะ</h2>
+            <h2>{copy.formHeading}</h2>
             <label>
-              <span>ชื่อเล่น <b>*</b></span>
+              <span>{copy.nickname} <b>*</b></span>
               <input
                 required
                 maxLength={60}
-                placeholder="กรอกชื่อเล่น"
+                placeholder={copy.nicknamePlaceholder}
                 value={draft.nickname}
                 onChange={(event) => setDraft({ ...draft, nickname: event.target.value })}
               />
             </label>
             <label>
-              <span>อายุ <b>*</b></span>
+              <span>{copy.age} <b>*</b></span>
               <input
                 required
                 type="number"
                 inputMode="numeric"
                 min="1"
                 max="120"
-                placeholder="กรอกอายุ"
+                placeholder={copy.agePlaceholder}
                 value={draft.age}
                 onChange={(event) => setDraft({ ...draft, age: event.target.value })}
               />
             </label>
 
             <fieldset className="gender-fieldset">
-              <legend>เพศ <b>*</b></legend>
+              <legend>{copy.gender} <b>*</b></legend>
               <div>
                 <label>
                   <input
@@ -97,7 +101,7 @@ export function RegisterScreen({
                     checked={draft.gender === 'male'}
                     onChange={() => setDraft({ ...draft, gender: 'male' })}
                   />
-                  <span>ชาย</span>
+                  <span>{copy.male}</span>
                 </label>
                 <label>
                   <input
@@ -107,7 +111,7 @@ export function RegisterScreen({
                     checked={draft.gender === 'female'}
                     onChange={() => setDraft({ ...draft, gender: 'female' })}
                   />
-                  <span>หญิง</span>
+                  <span>{copy.female}</span>
                 </label>
                 <label>
                   <input
@@ -117,17 +121,17 @@ export function RegisterScreen({
                     checked={draft.gender === 'unspecified'}
                     onChange={() => setDraft({ ...draft, gender: 'unspecified' })}
                   />
-                  <span>ไม่ระบุ</span>
+                  <span>{copy.unspecified}</span>
                 </label>
               </div>
             </fieldset>
 
             <label>
-              <span>เบอร์โทรศัพท์</span>
+              <span>{copy.phone}</span>
               <input
                 inputMode="tel"
                 maxLength={30}
-                placeholder="กรอกเบอร์โทรศัพท์"
+                placeholder={copy.phonePlaceholder}
                 value={draft.phone}
                 onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
                 aria-describedby="phone-help"
@@ -138,16 +142,16 @@ export function RegisterScreen({
               <span className="checkbox-control">
                 <input
                   type="checkbox"
-                  aria-label="ยอมรับนโยบายความเป็นส่วนตัว"
+                  aria-label={copy.privacyAria}
                   checked={draft.privacyAccepted}
                   onChange={(event) => setDraft({ ...draft, privacyAccepted: event.target.checked })}
                 />
                 <Check aria-hidden="true" strokeWidth={3} />
               </span>
               <span>
-                รับทราบและให้ความยินยอมตาม{' '}
+                {copy.privacyPrefix}{' '}
                 <button type="button" className="privacy-link" onClick={() => setPrivacyOpen(true)}>
-                  นโยบายความเป็นส่วนตัว
+                  {copy.privacyLink}
                 </button>
               </span>
             </div>
@@ -155,7 +159,7 @@ export function RegisterScreen({
             {error && <p className="form-error">{error}</p>}
           </section>
           <button className="figma-button register-button" disabled={!canSubmit}>
-            {submitting ? 'กำลังเตรียมเกม…' : 'ค้นหาตัวเอง'}
+            {submitting ? copy.submitting : copy.submit}
           </button>
         </form>
       </div>
@@ -169,22 +173,13 @@ export function RegisterScreen({
             aria-labelledby="privacy-title"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <h2 id="privacy-title">นโยบายความเป็นส่วนตัว</h2>
+            <h2 id="privacy-title">{copy.privacyTitle}</h2>
             <div className="privacy-copy">
-              <p>
-                โครงการเก็บชื่อเล่น อายุ เพศ เบอร์โทรศัพท์ที่ท่านเลือกกรอก
-                คำตอบ และผลลัพธ์ของเกม เพื่อดำเนินกิจกรรม วิเคราะห์ผลในภาพรวม
-                และติดต่อกลับตามวัตถุประสงค์ของโครงการ
-              </p>
-              <p>
-                ข้อมูลจะถูกจัดเก็บใน Supabase และ Google Sheets ซึ่งใช้เป็นระบบสำรอง
-                โดยจำกัดการเข้าถึงเฉพาะผู้ดูแลที่ได้รับอนุญาต และเก็บรักษาตามระยะเวลา
-                ที่โครงการกำหนด
-              </p>
-              <p><strong>ทีมโครงการต้องแทนที่ข้อความนี้ด้วยนโยบายฉบับอนุมัติก่อนเปิดใช้งานจริง</strong></p>
+              {copy.privacyParagraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              <p><strong>{copy.privacyWarning}</strong></p>
             </div>
             <button type="button" className="figma-button privacy-close" onClick={() => setPrivacyOpen(false)}>
-              ปิด
+              {copy.close}
             </button>
           </section>
         </div>

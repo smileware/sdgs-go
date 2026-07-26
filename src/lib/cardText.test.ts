@@ -19,4 +19,11 @@ describe('balanceCardText', () => {
     expect(lines.length).toBeLessThanOrEqual(4)
     expect(lines.every(Boolean)).toBe(true)
   })
+
+  it('balances English copy without losing spaces between words', () => {
+    const lines = balanceCardText('Invite friends to join a volunteer project', 'en')
+    expect(lines.length).toBeGreaterThanOrEqual(3)
+    expect(lines.join(' ')).toBe('Invite friends to join a volunteer project')
+    expect(lines.every((line) => !line.includes('  '))).toBe(true)
+  })
 })

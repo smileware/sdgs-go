@@ -1,12 +1,12 @@
-const WORD_SEGMENTER = new Intl.Segmenter('th', { granularity: 'word' })
-const GRAPHEME_SEGMENTER = new Intl.Segmenter('th', { granularity: 'grapheme' })
+import type { Language } from '../types'
 
-const tokenize = (text: string): string[] => {
+const tokenize = (text: string, language: Language): string[] => {
+  const segmenter = new Intl.Segmenter(language, { granularity: 'word' })
   const tokens: string[] = []
 
-  for (const { segment } of WORD_SEGMENTER.segment(text.trim())) {
+  for (const { segment } of segmenter.segment(text.trim())) {
     if (/^\s+$/.test(segment)) {
-      if (tokens.length) tokens[tokens.length - 1] += segment
+      if (language === 'th' && tokens.length) tokens[tokens.length - 1] += segment
     } else if (/^[,.;:!?ๆฯ]+$/.test(segment) && tokens.length) {
       tokens[tokens.length - 1] += segment
     } else {
@@ -17,9 +17,10 @@ const tokenize = (text: string): string[] => {
   return tokens
 }
 
-const visualWidth = (text: string): number => {
+const visualWidth = (text: string, language: Language): number => {
+  const segmenter = new Intl.Segmenter(language, { granularity: 'grapheme' })
   let width = 0
-  for (const { segment } of GRAPHEME_SEGMENTER.segment(text.trim())) {
+  for (const { segment } of segmenter.segment(text.trim())) {
     if (/^\s+$/.test(segment)) width += 0.35
     else if (/^[A-Za-z0-9]$/.test(segment)) width += 0.62
     else if (/^[,.;:!?ๆฯ]$/.test(segment)) width += 0.45
@@ -28,8 +29,11 @@ const visualWidth = (text: string): number => {
   return width
 }
 
-const partition = (tokens: string[], lineCount: number): string[] => {
-  const totalWidth = visualWidth(tokens.join(''))
+const joinTokens = (tokens: string[], language: Language): string =>
+  tokens.join(language === 'en' ? ' ' : '').replace(/\s+([,.;:!?])/g, '$1').trim()
+
+const partition = (tokens: string[], lineCount: number, language: Language): string[] => {
+  const totalWidth = visualWidth(joinTokens(tokens, language), language)
   const targetWidth = totalWidth / lineCount
   const memo = new Map<string, { cost: number; lines: string[] }>()
 
@@ -39,8 +43,8 @@ const partition = (tokens: string[], lineCount: number): string[] => {
     if (cached) return cached
 
     if (linesLeft === 1) {
-      const line = tokens.slice(start).join('').trim()
-      const result = { cost: Math.pow(visualWidth(line) - targetWidth, 2), lines: [line] }
+      const line = joinTokens(tokens.slice(start), language)
+      const result = { cost: Math.pow(visualWidth(line, language) - targetWidth, 2), lines: [line] }
       memo.set(key, result)
       return result
     }
@@ -49,8 +53,8 @@ const partition = (tokens: string[], lineCount: number): string[] => {
     const lastEnd = tokens.length - linesLeft + 1
 
     for (let end = start + 1; end <= lastEnd; end += 1) {
-      const line = tokens.slice(start, end).join('').trim()
-      const lineWidth = visualWidth(line)
+      const line = joinTokens(tokens.slice(start, end), language)
+      const lineWidth = visualWidth(line, language)
       const remaining = solve(end, linesLeft - 1)
       const raggedness = Math.pow(lineWidth - targetWidth, 2)
       const overflowPenalty = lineWidth > targetWidth * 1.35
@@ -68,13 +72,14 @@ const partition = (tokens: string[], lineCount: number): string[] => {
   return solve(0, lineCount).lines
 }
 
-export const balanceCardText = (text: string): string[] => {
-  const tokens = tokenize(text)
+export const balanceCardText = (text: string, language: Language = 'th'): string[] => {
+  const tokens = tokenize(text, language)
   if (tokens.length <= 1) return [text.trim()]
 
-  const width = visualWidth(text)
-  const requestedLines = Math.min(4, Math.max(1, Math.ceil(width / 15)))
+  const width = visualWidth(text, language)
+  const targetLineWidth = language === 'en' ? 12 : 15
+  const requestedLines = Math.min(4, Math.max(1, Math.ceil(width / targetLineWidth)))
   const lineCount = Math.min(requestedLines, tokens.length)
 
-  return partition(tokens, lineCount)
+  return partition(tokens, lineCount, language)
 }

@@ -1,10 +1,11 @@
-const CACHE_NAME = 'sustrend-mobile-v2'
+const CACHE_NAME = 'sustrend-mobile-v3'
 const PRECACHE = [
   '/',
   '/index.html',
   '/fonts/GoogleSans-Variable.ttf',
   '/assets/splash-screen.png',
-  '/assets/intro-image.png',
+  '/assets/intro-th.png',
+  '/assets/intro-en.png',
   '/assets/form-cards.png',
   '/assets/nesdc-logo.png',
   '/assets/sdgs-wheel.svg',

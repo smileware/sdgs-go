@@ -1,5 +1,6 @@
 export const CATEGORIES = ['people', 'prosperity', 'planet', 'peace', 'partnership'] as const
 
+export type Language = 'th' | 'en'
 export type Category = (typeof CATEGORIES)[number]
 export type CharacterKey = Category | 'balanced' | 'no-score'
 export type Scores = Record<Category, number>
@@ -10,6 +11,7 @@ export interface Card {
   icon: string
   image: string
   text: string
+  textEn: string
 }
 
 export interface CardResponse {
@@ -42,6 +44,12 @@ export interface CharacterContent {
   description: string
   strength: string
   advice: string
+  en: {
+    name: string
+    description: string
+    strength: string
+    advice: string
+  }
   icon: string
   image?: string
   color: string

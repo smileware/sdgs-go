@@ -22,6 +22,7 @@ describe('card content', () => {
     for (const category of CATEGORIES) {
       expect(CARDS.filter((card) => card.category === category)).toHaveLength(16)
     }
+    expect(CARDS.every((card) => card.text.trim() && card.textEn.trim())).toBe(true)
   })
 
   it('maps every card to a real image asset', () => {

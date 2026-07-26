@@ -1,21 +1,25 @@
 import { Heart, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { SwipeDeck, type SwipeDirection } from '../components/SwipeDeck'
-import type { Card, CardResponse, GameResult, PlayerDraft } from '../types'
+import { PLAYER_COPY } from '../content/translations'
+import type { Card, CardResponse, GameResult, Language, PlayerDraft } from '../types'
 import { calculateResult } from '../lib/game'
 import { savePlay } from '../lib/repository'
 
 export function GameScreen({
+  language,
   participantId,
   player,
   cards,
   onComplete,
 }: {
+  language: Language
   participantId: string
   player: PlayerDraft
   cards: Card[]
   onComplete: (result: GameResult, responses: CardResponse[]) => void
 }) {
+  const copy = PLAYER_COPY[language].game
   const [index, setIndex] = useState(0)
   const [responses, setResponses] = useState<CardResponse[]>([])
   const [forcedSwipe, setForcedSwipe] = useState<{ direction: SwipeDirection; token: number } | null>(null)
@@ -58,20 +62,20 @@ export function GameScreen({
       <div className="progress-copy">{index + 1}/{cards.length}</div>
 
       <section className="game-copy">
-        <h1>คุณรักที่จะทำสิ่งนี้หรือไม่?</h1>
+        <h1>{copy.question}</h1>
       </section>
 
-      <SwipeDeck cards={visibleCards} forcedSwipe={forcedSwipe} onSwipe={answer} />
+      <SwipeDeck language={language} cards={visibleCards} forcedSwipe={forcedSwipe} onSwipe={answer} />
 
       <div className="game-actions">
-        <button className="action-button action-button--pass" onClick={() => triggerButtonSwipe('left')} disabled={saving} aria-label="อาจจะยัง">
+        <button className="action-button action-button--pass" onClick={() => triggerButtonSwipe('left')} disabled={saving} aria-label={copy.pass}>
           <X size={45} strokeWidth={1.8} />
         </button>
-        <button className="action-button action-button--like" onClick={() => triggerButtonSwipe('right')} disabled={saving} aria-label="รักเลย">
+        <button className="action-button action-button--like" onClick={() => triggerButtonSwipe('right')} disabled={saving} aria-label={copy.like}>
           <Heart size={42} strokeWidth={1.8} />
         </button>
       </div>
-      <p className="drag-note">ลากการ์ดซ้าย/ขวา หรือกดปุ่ม</p>
+      <p className="drag-note">{copy.instruction}</p>
     </main>
   )
 }

@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { GameResult } from '../types'
+import type { GameResult, Language } from '../types'
 import { ResultScreen } from './ResultScreen'
 
 const { toPngMock } = vi.hoisted(() => ({
@@ -19,9 +19,10 @@ const scores = {
   partnership: 1,
 }
 
-const renderResult = (result: GameResult) => {
+const renderResult = (result: GameResult, language: Language = 'th') => {
   render(
     <ResultScreen
+      language={language}
       nickname="ผู้ทดสอบ"
       result={result}
       onReplay={vi.fn()}
@@ -96,5 +97,29 @@ describe('ResultScreen copy', () => {
     await waitFor(() => expect(toPngMock).toHaveBeenCalledOnce())
     expect(capturedSources).toHaveLength(6)
     expect(capturedSources.every((source) => source.startsWith('data:image/png'))).toBe(true)
+  })
+
+  it('renders the complete English result copy', () => {
+    renderResult({
+      character: 'partnership',
+      strongest: 'partnership',
+      growth: 'people',
+      scores: { ...scores, partnership: 3, people: 0 },
+    }, 'en')
+
+    expect(screen.getByText('You are...')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Collaboration Catalyst' })).toBeInTheDocument()
+    expect(screen.getByText('Your strength')).toBeInTheDocument()
+    expect(screen.getByText('Growth area')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Share to' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
+  })
+
+  it('renders the five-part English balanced title', () => {
+    renderResult({ character: 'balanced', strongest: null, growth: null, scores }, 'en')
+
+    expect(screen.getByRole('heading', { name: 'Balanced Across All Five Dimensions' })).toBeInTheDocument()
+    expect(screen.getByRole('list')).toBeInTheDocument()
+    expect(screen.getByText('You value relationships and caring for one another.')).toBeInTheDocument()
   })
 })

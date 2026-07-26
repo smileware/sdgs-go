@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CARDS } from './content/cards'
+import { getStoredLanguage, LANGUAGE_STORAGE_KEY, PLAYER_COPY } from './content/translations'
 import { getConfigurationError } from './lib/config'
 import { sampleGameCards } from './lib/game'
 import { startOutboxSync } from './lib/outbox'
@@ -10,13 +11,14 @@ import { RegisterScreen } from './screens/RegisterScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { SplashScreen } from './screens/SplashScreen'
 import { StartScreen } from './screens/StartScreen'
-import type { Card, CardResponse, GameResult, PlayerDraft } from './types'
+import type { Card, CardResponse, GameResult, Language, PlayerDraft } from './types'
 
 type Screen = 'splash' | 'start' | 'register' | 'game' | 'result' | 'dashboard'
 
 export default function App() {
   const configurationError = getConfigurationError()
   const [screen, setScreen] = useState<Screen>(() => window.location.pathname === '/dashboard' ? 'dashboard' : 'splash')
+  const [language, setLanguage] = useState<Language>(() => getStoredLanguage())
   const [player, setPlayer] = useState<PlayerDraft | null>(null)
   const [participantId, setParticipantId] = useState('')
   const [cards, setCards] = useState<Card[]>([])
@@ -24,6 +26,20 @@ export default function App() {
   const [, setResponses] = useState<CardResponse[]>([])
 
   useEffect(() => startOutboxSync(), [])
+  useEffect(() => {
+    if (screen === 'dashboard') {
+      document.documentElement.lang = 'th'
+      return
+    }
+
+    document.documentElement.lang = language
+    document.title = PLAYER_COPY[language].documentTitle
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    } catch {
+      // Language persistence is optional when storage is unavailable.
+    }
+  }, [language, screen])
 
   const navigate = (next: Screen) => {
     const path = next === 'dashboard' ? '/dashboard' : '/'
@@ -48,19 +64,23 @@ export default function App() {
   }
 
   if (configurationError) {
+    const copy = PLAYER_COPY[language].configuration
     return (
       <main className="configuration-error">
-        <h1>ระบบยังไม่พร้อมใช้งาน</h1>
-        <p>กรุณาติดต่อทีมงานประจำบูธ</p>
+        <h1>{copy.title}</h1>
+        <p>{copy.detail}</p>
       </main>
     )
   }
-  if (screen === 'splash') return <SplashScreen onComplete={() => navigate('start')} />
+  if (screen === 'splash') return <SplashScreen language={language} onComplete={() => navigate('start')} />
   if (screen === 'dashboard') return <DashboardScreen />
-  if (screen === 'register') return <RegisterScreen onBack={() => navigate('start')} onSubmit={register} />
+  if (screen === 'register') {
+    return <RegisterScreen language={language} onBack={() => navigate('start')} onSubmit={register} />
+  }
   if (screen === 'game' && participantId && player) {
     return (
       <GameScreen
+        language={language}
         participantId={participantId}
         player={player}
         cards={cards}
@@ -73,7 +93,21 @@ export default function App() {
     )
   }
   if (screen === 'result' && result && player) {
-    return <ResultScreen nickname={player.nickname} result={result} onReplay={replay} onHome={() => navigate('start')} />
+    return (
+      <ResultScreen
+        language={language}
+        nickname={player.nickname}
+        result={result}
+        onReplay={replay}
+        onHome={() => navigate('start')}
+      />
+    )
   }
-  return <StartScreen onStart={() => navigate('register')} onDashboard={() => navigate('dashboard')} />
+  return (
+    <StartScreen
+      language={language}
+      onLanguageChange={setLanguage}
+      onStart={() => navigate('register')}
+    />
+  )
 }
