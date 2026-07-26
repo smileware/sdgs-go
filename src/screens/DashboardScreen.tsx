@@ -1,55 +1,89 @@
-import { ArrowLeft, BarChart3, Download, LogIn, LogOut, RefreshCw, Users, Wifi, WifiOff } from 'lucide-react'
-import { type FormEvent, useEffect, useState } from 'react'
+import { LogIn, Users } from 'lucide-react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Brand } from '../components/Brand'
 import { CHARACTERS } from '../content/results'
-import { getSyncStatus, subscribeToSyncStatus } from '../lib/outbox'
 import { loadDashboardSummary } from '../lib/repository'
-import type { DashboardSummary, SyncStatus } from '../types'
+import type { CharacterKey, DashboardSummary } from '../types'
 
 type AuthState = 'checking' | 'authenticated' | 'unauthenticated'
 
-const emptySyncStatus: SyncStatus = {
-  pending: 0,
-  partial: 0,
-  deadLetter: 0,
-  online: navigator.onLine,
-  lastSuccessfulSync: null,
-}
+const DASHBOARD_RESULTS: CharacterKey[] = [
+  'people',
+  'prosperity',
+  'planet',
+  'peace',
+  'partnership',
+  'balanced',
+  'no-score',
+]
+const DASHBOARD_REFRESH_MS = 30_000
 
-export function DashboardScreen({ onBack }: { onBack: () => void }) {
+export function DashboardScreen() {
   const [authState, setAuthState] = useState<AuthState>('checking')
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
-  const [csrfToken, setCsrfToken] = useState('')
   const [error, setError] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(emptySyncStatus)
+  const loadInFlight = useRef<Promise<void> | null>(null)
+  const summaryRef = useRef<DashboardSummary | null>(null)
 
-  const load = async () => {
-    setError('')
-    try {
-      const next = await loadDashboardSummary()
-      setSummary(next)
-      setCsrfToken(next.csrfToken)
-      setAuthState('authenticated')
-    } catch (nextError) {
-      if (nextError instanceof Error && nextError.message === 'unauthorized') {
-        setAuthState('unauthenticated')
-        setSummary(null)
-      } else {
-        setAuthState('unauthenticated')
-        setError(authState === 'checking' ? '' : 'โหลดข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง')
+  const load = useCallback((quiet = false): Promise<void> => {
+    if (loadInFlight.current) return loadInFlight.current
+    if (!quiet) setError('')
+
+    const request = (async () => {
+      try {
+        const next = await loadDashboardSummary()
+        summaryRef.current = next
+        setSummary(next)
+        setAuthState('authenticated')
+        setError('')
+      } catch (nextError) {
+        if (nextError instanceof Error && nextError.message === 'unauthorized') {
+          setAuthState('unauthenticated')
+          summaryRef.current = null
+          setSummary(null)
+        } else {
+          setAuthState('authenticated')
+          setError(summaryRef.current
+            ? 'ยังอัปเดตข้อมูลล่าสุดไม่ได้ กำลังแสดงข้อมูลเดิม'
+            : 'โหลดข้อมูลไม่สำเร็จ ระบบจะลองใหม่อัตโนมัติ')
+        }
       }
-    }
-  }
+    })().finally(() => {
+      loadInFlight.current = null
+    })
+
+    loadInFlight.current = request
+    return request
+  }, [])
 
   useEffect(() => {
-    void load()
-    const updateSync = () => { void getSyncStatus().then(setSyncStatus) }
-    updateSync()
-    return subscribeToSyncStatus(updateSync)
-  }, [])
+    void load(false)
+  }, [load])
+
+  useEffect(() => {
+    if (authState !== 'authenticated') return
+
+    const refreshWhenActive = () => {
+      if (document.visibilityState !== 'hidden' && navigator.onLine) void load(true)
+    }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshWhenActive()
+    }
+    const interval = window.setInterval(refreshWhenActive, DASHBOARD_REFRESH_MS)
+    window.addEventListener('focus', refreshWhenActive)
+    window.addEventListener('online', refreshWhenActive)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshWhenActive)
+      window.removeEventListener('online', refreshWhenActive)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [authState, load])
 
   const login = async (event: FormEvent) => {
     event.preventDefault()
@@ -62,53 +96,12 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),
       })
-      const body = await response.json().catch(() => ({})) as { csrfToken?: string; error?: string }
+      const body = await response.json().catch(() => ({})) as { error?: string }
       if (!response.ok) throw new Error(body.error || 'login failed')
-      setCsrfToken(body.csrfToken ?? '')
       setPassword('')
       await load()
     } catch {
       setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือมีการลองเข้าสู่ระบบมากเกินไป')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const logout = async () => {
-    await fetch('/api/admin/logout', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json', 'x-csrf-token': csrfToken },
-    }).catch(() => null)
-    setSummary(null)
-    setCsrfToken('')
-    setAuthState('unauthenticated')
-  }
-
-  const exportCsv = async () => {
-    setBusy(true)
-    setError('')
-    try {
-      const response = await fetch('/api/admin/export', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json', 'x-csrf-token': csrfToken },
-        body: JSON.stringify({}),
-      })
-      if (response.status === 401) {
-        setAuthState('unauthenticated')
-        return
-      }
-      if (!response.ok) throw new Error('export failed')
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `sustrend-export-${new Date().toISOString().slice(0, 10)}.csv`
-      link.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      setError('ส่งออกข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง')
     } finally {
       setBusy(false)
     }
@@ -121,7 +114,7 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
           <Brand />
           <span className="dashboard-kicker"><LogIn size={16} /> ADMIN ACCESS</span>
           <h1>เข้าสู่ระบบทีมงาน</h1>
-          <p>ใช้บัญชีกลางที่กำหนดไว้สำหรับดูสรุปและส่งออกข้อมูล</p>
+          <p>ใช้บัญชีกลางที่กำหนดไว้สำหรับดูภาพรวมกิจกรรม</p>
           <label>
             <span>ชื่อผู้ใช้</span>
             <input type="text" autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} />
@@ -134,85 +127,65 @@ export function DashboardScreen({ onBack }: { onBack: () => void }) {
           <button className="figma-button" disabled={busy || authState === 'checking'}>
             {authState === 'checking' ? 'กำลังตรวจสอบ…' : busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
           </button>
-          <button type="button" className="dashboard-back-link" onClick={onBack}>กลับหน้าเกม</button>
         </form>
       </main>
     )
   }
 
+  const resultCounts = new Map(summary?.characters.map((item) => [item.character, item.count]) ?? [])
+
   return (
     <main className="dashboard-screen">
-      <header className="dashboard-header">
-        <button className="round-button round-button--small" onClick={onBack} aria-label="กลับ"><ArrowLeft size={19} /></button>
-        <Brand />
-        <button className="round-button round-button--small" onClick={logout} aria-label="ออกจากระบบ"><LogOut size={17} /></button>
-      </header>
-      <section className="dashboard-shell">
-        <div className="dashboard-title-row">
-          <div>
-            <span className="dashboard-kicker"><BarChart3 size={16} /> LIVE OVERVIEW</span>
-            <h1>ภาพรวมกิจกรรม</h1>
-            <p>ข้อมูลรวมเท่านั้น · Export ต้องผ่าน session ทีมงาน</p>
-          </div>
-          <div className="dashboard-tools">
-            <button onClick={() => void load()} disabled={busy}><RefreshCw size={16} /> รีเฟรช</button>
-            <button onClick={() => void exportCsv()} disabled={busy}><Download size={16} /> Export CSV</button>
-          </div>
-        </div>
+      <section className="dashboard-video-panel" aria-label="วิดีโอประชาสัมพันธ์">
+        <video autoPlay muted loop playsInline preload="auto" disablePictureInPicture>
+          <source src="/placeholder-video.mp4" type="video/mp4" />
+        </video>
+      </section>
 
-        <div className={`sync-banner ${syncStatus.online ? '' : 'sync-banner--offline'}`}>
-          {syncStatus.online ? <Wifi size={16} /> : <WifiOff size={16} />}
-          <span>
-            {syncStatus.online ? 'เครื่องนี้ออนไลน์' : 'เครื่องนี้ออฟไลน์'}
-            {' · '}รอส่ง {syncStatus.pending} · ส่งบางส่วน {syncStatus.partial}
-            {syncStatus.deadLetter > 0 && ` · ต้องตรวจสอบ ${syncStatus.deadLetter}`}
-          </span>
-        </div>
-
-        {error && <p className="form-error dashboard-error">{error}</p>}
-        {!summary && !error && <div className="loading-card">กำลังโหลดข้อมูล…</div>}
+      <section className="dashboard-live-panel" aria-live="polite">
+        {!summary && !error && <div className="dashboard-loading">กำลังโหลดข้อมูล…</div>}
+        {error && <p className="dashboard-live-error">{error}</p>}
         {summary && (
           <>
-            {summary.syncWarning && <div className="demo-banner">{summary.syncWarning}</div>}
-            <p className="dashboard-source">แหล่งข้อมูล: {summary.source === 'google-sheets' ? 'Google Sheets fallback' : 'Supabase'}</p>
-            <div className="metric-grid">
-              <article className="metric-card metric-card--primary">
-                <Users size={22} />
-                <span>ผู้เล่นที่เล่นจบ</span>
-                <strong>{summary.totalPlayers.toLocaleString()}</strong>
-                <small>นับผู้เล่นแต่ละคนครั้งเดียว</small>
-              </article>
-              <article className="metric-card">
-                <RefreshCw size={22} />
-                <span>รอบที่เล่นทั้งหมด</span>
-                <strong>{summary.totalPlays.toLocaleString()}</strong>
-                <small>รวมการเล่นชุดใหม่</small>
-              </article>
+            <header className="dashboard-total">
+              <div className="dashboard-total-icon"><Users /></div>
+              <div>
+                <span>มีผู้ร่วมเล่นสะสมทั้งหมด</span>
+                <p>
+                  <strong>{summary.totalPlayers.toLocaleString('th-TH')}</strong>
+                  <small>คน</small>
+                </p>
+              </div>
+              <time dateTime={summary.updatedAt}>
+                อัปเดต {new Date(summary.updatedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+              </time>
+            </header>
+
+            <div className="dashboard-category-heading">
+              <h1>จำนวนผู้ร่วมเล่นในแต่ละหมวดหมู่</h1>
+              {summary.syncWarning && <span title={summary.syncWarning}>ข้อมูลสำรอง</span>}
             </div>
 
-            <section className="distribution-card">
-              <div className="section-heading">
-                <div><span>CHARACTER MIX</span><h2>สัดส่วนตัวละคร</h2></div>
-                <small>อัปเดต {new Date(summary.updatedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</small>
-              </div>
-              {!summary.characters.length && <div className="empty-state">ยังไม่มีผู้เล่นที่เล่นจบ<br /><small>ข้อมูลจะปรากฏหลังจบเกมแรก</small></div>}
-              <div className="distribution-list">
-                {summary.characters.map((item) => {
-                  const character = CHARACTERS[item.character]
-                  return (
-                    <div className="distribution-row" key={item.character}>
-                      <div className="distribution-icon" style={{ background: character.softColor }}>
-                        {character.image ? <img src={character.image} alt="" /> : character.icon}
-                      </div>
-                      <div className="distribution-copy">
-                        <div><b>{character.name}</b><span>{item.count} คน · {item.percentage}%</span></div>
-                        <div className="distribution-track"><i style={{ width: `${item.percentage}%`, background: character.color }} /></div>
-                      </div>
+            <div className="dashboard-category-grid">
+              {DASHBOARD_RESULTS.map((key) => {
+                const character = CHARACTERS[key]
+                return (
+                  <article
+                    className="dashboard-category-card"
+                    key={key}
+                    style={{ '--dashboard-character': character.color, '--dashboard-character-soft': character.softColor } as React.CSSProperties}
+                  >
+                    <div className="dashboard-category-icon">
+                      {character.image ? <img src={character.image} alt="" /> : <span>{character.icon}</span>}
                     </div>
-                  )
-                })}
-              </div>
-            </section>
+                    <div>
+                      <span>{character.name}</span>
+                      <p><strong>{(resultCounts.get(key) ?? 0).toLocaleString('th-TH')}</strong><small> คน</small></p>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
           </>
         )}
       </section>

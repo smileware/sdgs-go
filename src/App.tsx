@@ -56,7 +56,7 @@ export default function App() {
     )
   }
   if (screen === 'splash') return <SplashScreen onComplete={() => navigate('start')} />
-  if (screen === 'dashboard') return <DashboardScreen onBack={() => navigate('start')} />
+  if (screen === 'dashboard') return <DashboardScreen />
   if (screen === 'register') return <RegisterScreen onBack={() => navigate('start')} onSubmit={register} />
   if (screen === 'game' && participantId && player) {
     return (
