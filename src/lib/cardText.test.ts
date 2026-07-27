@@ -26,4 +26,12 @@ describe('balanceCardText', () => {
     expect(lines.join(' ')).toBe('Invite friends to join a volunteer project')
     expect(lines.every((line) => !line.includes('  '))).toBe(true)
   })
+
+  it('keeps long English copy within four short lines for narrow Android cards', () => {
+    const copy = 'Volunteer with a foundation that supports people who are ill'
+    const lines = balanceCardText(copy, 'en')
+    expect(lines).toHaveLength(4)
+    expect(lines.join(' ')).toBe(copy)
+    expect(lines.every((line) => line.length <= 18)).toBe(true)
+  })
 })

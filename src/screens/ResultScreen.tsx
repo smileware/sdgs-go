@@ -4,13 +4,6 @@ import { CHARACTERS } from '../content/results'
 import { PLAYER_COPY } from '../content/translations'
 import type { GameResult, Language } from '../types'
 
-const SHARE_PLATFORMS = [
-  { key: 'facebook', label: 'Facebook', icon: '/assets/social/facebook.svg' },
-  { key: 'instagram', label: 'Instagram', icon: '/assets/social/instagram.svg' },
-  { key: 'tiktok', label: 'TikTok', icon: '/assets/social/tiktok.svg' },
-  { key: 'x', label: 'X', icon: '/assets/social/x.svg' },
-] as const
-
 const blobToDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
   const reader = new FileReader()
   reader.onload = () => resolve(String(reader.result))
@@ -275,7 +268,7 @@ export function ResultScreen({
     }
   }
 
-  const shareImage = async (platform: string) => {
+  const shareImage = async () => {
     if (!preparedImage) return
     setSharing(true)
     setShareMessage('')
@@ -293,7 +286,7 @@ export function ResultScreen({
           : copy.shareOpened)
       } else {
         savePreparedImage()
-        setShareMessage(copy.platformUnsupported(platform))
+        setShareMessage(copy.shareUnsupported)
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -323,12 +316,16 @@ export function ResultScreen({
           <div className="result-heading">
             <p className="you-are">{copy.youAre}</p>
             <h1
-              className={isBalanced ? 'balanced-title' : undefined}
+              className={isBalanced
+                ? `balanced-title${language === 'en' ? ' balanced-title--en' : ''}`
+                : undefined}
               aria-label={isBalanced ? character.name : undefined}
             >
               {isBalanced ? (
                 <>
-                  {copy.balancedTitleParts.map((part) => <span key={part}>{part}</span>)}
+                  {copy.balancedTitleParts.map((part, index) => (
+                    <span key={part}>{language === 'en' && index > 0 ? ` ${part}` : part}</span>
+                  ))}
                 </>
               ) : character.name}
             </h1>
@@ -375,24 +372,26 @@ export function ResultScreen({
       </div>
 
       <div className="result-actions">
-        <section className="social-share" aria-labelledby="share-heading">
-          <h2 id="share-heading">{copy.shareHeading}</h2>
-          <div className="social-share-buttons">
-            {SHARE_PLATFORMS.map((platform) => (
-              <button
-                key={platform.key}
-                className={`social-share-button social-share-button--${platform.key}`}
-                type="button"
-                aria-label={copy.shareTo(platform.label)}
-                onClick={() => void shareImage(platform.label)}
-                disabled={!preparedImage || sharing}
-              >
-                <span className="social-share-icon">
-                  <img src={platform.icon} alt="" />
-                </span>
-              </button>
-            ))}
-          </div>
+        <section className="social-share" aria-label={copy.shareButton}>
+          <button
+            className="figma-button share-button"
+            type="button"
+            onClick={() => void shareImage()}
+            disabled={!preparedImage || sharing}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5m-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3" />
+            </svg>
+            <span>{copy.shareButton}</span>
+          </button>
           {shareMessage && <p className="share-message" role="status">{shareMessage}</p>}
         </section>
         {/* <button className="figma-button" onClick={() => void saveImageToPhotos()} disabled={!preparedImage || sharing}>

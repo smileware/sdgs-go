@@ -107,7 +107,7 @@ export const CHARACTERS: Record<CharacterKey, CharacterContent> = {
     strength: 'คุณมองเห็นความเชื่อมโยงของผู้คน ความเติบโต โลก ความเข้าใจ และความร่วมมือได้อย่างสมดุล',
     advice: 'ลองเลือกหนึ่งด้านที่อยากลงมือทำให้ชัดขึ้น แล้วเริ่มจากก้าวเล็กๆ ที่ทำได้ในวันนี้',
     en: {
-      name: 'Balanced Across All Five Dimensions',
+      name: 'Balanced in All 5 Dimensions',
       description: 'You value relationships and caring for one another.',
       strength: 'You see the connections among people, prosperity, the planet, peace, and partnership in a balanced way.',
       advice: 'Choose one dimension where you want to take clearer action, then begin with one small step today.',

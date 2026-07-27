@@ -46,8 +46,9 @@ describe('ResultScreen copy', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(5)
     expect(within(list).getByText('ให้คุณค่ากับความสัมพันธ์และการดูแลกัน')).toBeInTheDocument()
     expect(screen.queryByText('จุดแข็ง')).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'แชร์ไปยัง' })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^แชร์ภาพไปยัง/ })).toHaveLength(4)
+    const shareButton = screen.getByRole('button', { name: 'แชร์' })
+    expect(shareButton).toBeInTheDocument()
+    expect(shareButton.querySelector('svg')).toBeInTheDocument()
   })
 
   it('uses the winning character weakness copy', () => {
@@ -111,14 +112,16 @@ describe('ResultScreen copy', () => {
     expect(screen.getByRole('heading', { name: 'Collaboration Catalyst' })).toBeInTheDocument()
     expect(screen.getByText('Your strength')).toBeInTheDocument()
     expect(screen.getByText('Growth area')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Share to' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
   })
 
   it('renders the five-part English balanced title', () => {
     renderResult({ character: 'balanced', strongest: null, growth: null, scores }, 'en')
 
-    expect(screen.getByRole('heading', { name: 'Balanced Across All Five Dimensions' })).toBeInTheDocument()
+    const title = screen.getByRole('heading', { name: 'Balanced in All 5 Dimensions' })
+    expect(title).toHaveClass('balanced-title--en')
+    expect(title).toHaveTextContent('Balanced in All 5 Dimensions')
     expect(screen.getByRole('list')).toBeInTheDocument()
     expect(screen.getByText('You value relationships and caring for one another.')).toBeInTheDocument()
   })

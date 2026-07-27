@@ -22,7 +22,12 @@
 }
 
 * { box-sizing: border-box; }
-html { min-width: 280px; background: var(--cream); }
+html {
+  min-width: 280px;
+  background: var(--cream);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body, #root { margin: 0; min-width: 280px; min-height: 100%; background: var(--cream); }
 body { overflow-x: hidden; }
 button, input, select { font: inherit; }
@@ -654,6 +659,11 @@ button:disabled { cursor: not-allowed; }
   white-space: nowrap;
   text-align: center;
 }
+.game-screen[data-language="en"] .swipe-card h2 {
+  font-size: clamp(16px, 4.8cqw, 23px);
+  line-height: 1.14;
+  gap: 3px;
+}
 .swipe-stamp {
   position: absolute;
   z-index: 5;
@@ -742,6 +752,7 @@ button:disabled { cursor: not-allowed; }
   text-align: center;
 }
 .result-heading {
+  width: 100%;
   display: grid;
   justify-items: center;
   gap: 0;
@@ -767,6 +778,13 @@ button:disabled { cursor: not-allowed; }
 .balanced-title span:nth-child(3) { color: #5cd490; }
 .balanced-title span:nth-child(4) { color: #6fbceb; }
 .balanced-title span:nth-child(5) { color: #d7a6ea; }
+.share-card h1.balanced-title--en {
+  width: 100%;
+  font-size: clamp(14px, 4.8cqw, 20px);
+  letter-spacing: -.035em;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
 .character-orbit {
   width: min(82cqw, 330px);
   height: auto;
@@ -880,71 +898,20 @@ button:disabled { cursor: not-allowed; }
 }
 .result-actions {
   width: min(calc(100% - 32px), 416px);
-  margin: 32px auto 0;
+  margin: 32px auto 16px;
   display: grid;
   gap: 10px;
 }
 .social-share {
-  margin-bottom: 18px;
   display: grid;
-  gap: 18px;
+  gap: 10px;
 }
-.social-share h2 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-}
-.social-share-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(10px, 4cqw, 22px);
-}
-.social-share-button {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
-  border: 1.5px solid #d5deeb;
-  border-radius: 50%;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  background: #fff;
-  transition: transform .16s ease, opacity .16s ease, border-color .16s ease;
-}
-.social-share-button:active { transform: scale(.94); }
-.social-share-button:focus-visible {
+.share-button svg { flex: 0 0 auto; }
+.share-button:focus-visible {
   outline: 3px solid rgba(60, 69, 224, .24);
   outline-offset: 3px;
 }
-.social-share-button:disabled { cursor: wait; opacity: .48; }
-.social-share-icon {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-}
-.social-share-icon img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-}
-.social-share-button--tiktok .social-share-icon {
-  border-radius: 50%;
-  background: #000;
-}
-.social-share-button--tiktok img {
-  width: 21px;
-  height: 24px;
-}
-.social-share-button--x img {
-  width: 29px;
-  height: 29px;
-}
+.share-button:disabled { cursor: wait; }
 .share-message {
   margin: -4px 0 0;
   color: #166534;

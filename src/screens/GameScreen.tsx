@@ -57,7 +57,11 @@ export function GameScreen({
   }
 
   return (
-    <main className="game-screen" data-category={visibleCards[0]?.category ?? 'people'}>
+    <main
+      className="game-screen"
+      data-category={visibleCards[0]?.category ?? 'people'}
+      data-language={language}
+    >
       <div className="progress-track"><span style={{ width: `${((index + 1) / cards.length) * 100}%` }} /></div>
       <div className="progress-copy">{index + 1}/{cards.length}</div>
 

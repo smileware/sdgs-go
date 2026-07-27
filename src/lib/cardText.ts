@@ -77,7 +77,7 @@ export const balanceCardText = (text: string, language: Language = 'th'): string
   if (tokens.length <= 1) return [text.trim()]
 
   const width = visualWidth(text, language)
-  const targetLineWidth = language === 'en' ? 12 : 15
+  const targetLineWidth = language === 'en' ? 10 : 15
   const requestedLines = Math.min(4, Math.max(1, Math.ceil(width / targetLineWidth)))
   const lineCount = Math.min(requestedLines, tokens.length)
 
