@@ -176,7 +176,6 @@ export function RegisterScreen({
             <h2 id="privacy-title">{copy.privacyTitle}</h2>
             <div className="privacy-copy">
               {copy.privacyParagraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              <p><strong>{copy.privacyWarning}</strong></p>
             </div>
             <button type="button" className="figma-button privacy-close" onClick={() => setPrivacyOpen(false)}>
               {copy.close}

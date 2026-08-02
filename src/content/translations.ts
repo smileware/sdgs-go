@@ -3,13 +3,17 @@ import type { Language } from '../types'
 export const LANGUAGE_STORAGE_KEY = 'sustrend-language-v1'
 
 const thaiPrivacy = [
-  'โครงการเก็บชื่อเล่น อายุ เพศ เบอร์โทรศัพท์ที่ท่านเลือกกรอก คำตอบ และผลลัพธ์ของเกม เพื่อดำเนินกิจกรรม วิเคราะห์ผลในภาพรวม และติดต่อกลับตามวัตถุประสงค์ของโครงการ',
-  'ข้อมูลจะถูกจัดเก็บใน Supabase และ Google Sheets ซึ่งใช้เป็นระบบสำรอง โดยจำกัดการเข้าถึงเฉพาะผู้ดูแลที่ได้รับอนุญาต และเก็บรักษาตามระยะเวลาที่โครงการกำหนด',
+  'สำนักงานสภาพัฒนาการเศรษฐกิจและสังคมแห่งชาติ (สศช.) เก็บรวบรวมชื่อเล่น อายุ เพศ เบอร์โทรศัพท์ (เฉพาะที่ท่านเลือกกรอก) คำตอบ และผลลัพธ์ของเกม เพื่อดำเนินกิจกรรม วิเคราะห์ผลในภาพรวมของโครงการ และติดต่อกลับตามวัตถุประสงค์ของโครงการ',
+  'ข้อมูลจะถูกจัดเก็บใน Supabase และ Google Sheets ซึ่งใช้เป็นระบบสำรอง โดยจำกัดการเข้าถึงเฉพาะผู้ดูแลที่ได้รับอนุญาต ทั้งนี้ผู้ให้บริการดังกล่าวอาจประมวลผลข้อมูลบนเซิร์ฟเวอร์ในต่างประเทศ',
+  'ข้อมูลจะถูกเก็บรักษาไว้ไม่เกิน 180 วัน นับจากวันที่เก็บข้อมูล หลังจากนั้นจะถูกลบทิ้งอย่างปลอดภัย',
+  'ท่านมีสิทธิขอเข้าถึง แก้ไข ลบข้อมูล หรือถอนความยินยอมที่ให้ไว้ได้ทุกเมื่อ โดยติดต่อ sdgs@nesdc.go.th หรือ เจ้าหน้าที่ประจำบูท และมีสิทธิร้องเรียนต่อสำนักงานคณะกรรมการคุ้มครองข้อมูลส่วนบุคคล (สคส.) หากเห็นว่าไม่ได้รับความเป็นธรรม',
 ]
 
 const englishPrivacy = [
-  'The project collects your nickname, age, gender, optional phone number, game responses, and result in order to run the activity, analyze aggregated outcomes, and contact you for the purposes of the project.',
-  'Your information is stored in Supabase and Google Sheets, which serves as a backup. Access is limited to authorized administrators, and the data is retained for the period defined by the project.',
+  'The Office of the National Economic and Social Development Council (NESDC) collects your nickname, age, gender, phone number (only if you choose to provide it), responses, and game results to conduct the activity, analyze the project’s overall results, and contact you for the purposes of the project.',
+  'Your data will be stored in Supabase and Google Sheets, which is used as a backup system. Access is restricted to authorized administrators. These service providers may process your data on servers located outside Thailand.',
+  'Your data will be retained for no longer than 180 days from the date of collection, after which it will be securely deleted.',
+  'You may request access to, correction of, or deletion of your data, or withdraw your consent at any time by contacting sdgs@nesdc.go.th or a booth staff member. You also have the right to lodge a complaint with the Office of the Personal Data Protection Committee (PDPC) if you believe you have been treated unfairly.',
 ]
 
 export const PLAYER_COPY = {
@@ -48,7 +52,6 @@ export const PLAYER_COPY = {
       privacyLink: 'นโยบายความเป็นส่วนตัว',
       privacyTitle: 'นโยบายความเป็นส่วนตัว',
       privacyParagraphs: thaiPrivacy,
-      privacyWarning: 'ทีมโครงการต้องแทนที่ข้อความนี้ด้วยนโยบายฉบับอนุมัติก่อนเปิดใช้งานจริง',
       close: 'ปิด',
       submit: 'ค้นหาตัวเอง',
       submitting: 'กำลังเตรียมเกม…',
@@ -122,7 +125,6 @@ export const PLAYER_COPY = {
       privacyLink: 'Privacy Policy',
       privacyTitle: 'Privacy Policy',
       privacyParagraphs: englishPrivacy,
-      privacyWarning: 'The project team must replace this placeholder with the approved policy before launch.',
       close: 'Close',
       submit: 'Discover yourself',
       submitting: 'Preparing the game…',

@@ -32,6 +32,8 @@ describe('RegisterScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'นโยบายความเป็นส่วนตัว' }))
     expect(screen.getByRole('dialog', { name: 'นโยบายความเป็นส่วนตัว' })).toBeInTheDocument()
     expect(screen.getByText(/Supabase และ Google Sheets/)).toBeInTheDocument()
+    expect(screen.getByText(/ไม่เกิน 180 วัน/)).toBeInTheDocument()
+    expect(screen.getByText(/sdgs@nesdc.go.th/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'ปิด' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -59,5 +61,7 @@ describe('RegisterScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Privacy Policy' }))
     expect(screen.getByRole('dialog', { name: 'Privacy Policy' })).toBeInTheDocument()
     expect(screen.getByText(/stored in Supabase and Google Sheets/)).toBeInTheDocument()
+    expect(screen.getByText(/no longer than 180 days/)).toBeInTheDocument()
+    expect(screen.getByText(/sdgs@nesdc.go.th/)).toBeInTheDocument()
   })
 })

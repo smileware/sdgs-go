@@ -111,7 +111,7 @@ The in-process limiter is an initial protection for the intended kiosk scale. En
 
 ### Before the event
 
-- Replace the privacy placeholder with approved language and increment `VITE_PRIVACY_VERSION`.
+- Confirm the approved privacy language is current and increment `VITE_PRIVACY_VERSION` whenever it changes.
 - Wake and smoke-test the Supabase Free project seven days, 24 hours, and the morning before the event.
 - Complete one online play and verify the same submission ID in Supabase and the Sheet.
 - Complete one offline play, reconnect, and verify both replicas.
@@ -138,12 +138,6 @@ LOAD_TEST_URL=https://sdgs-go.vercel.app/api/submissions npm run load:test
 
 ## Privacy release gate
 
-The checked-in privacy text is operationally descriptive but is not legal approval. Production release is blocked until the project owner approves:
-
-- purpose of collection;
-- storage in Supabase and Google Sheets;
-- access permissions;
-- retention period;
-- contact and data-subject request process.
+The checked-in Thai and English privacy text must remain aligned with the version approved by the project owner. Increment `VITE_PRIVACY_VERSION` whenever the policy changes so each acceptance records the applicable revision.
 
 Nickname and phone are stored as readable values by explicit product decision. Keep the Sheet private, restrict editors, avoid PII in logs, and rotate the shared admin credential after staff changes.
