@@ -21,6 +21,7 @@ const DASHBOARD_REFRESH_MS = 30_000
 export function DashboardScreen() {
   const [authState, setAuthState] = useState<AuthState>('checking')
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -37,6 +38,7 @@ export function DashboardScreen() {
         const next = await loadDashboardSummary()
         summaryRef.current = next
         setSummary(next)
+        setLastRefreshedAt(new Date().toISOString())
         setAuthState('authenticated')
         setError('')
       } catch (nextError) {
@@ -44,6 +46,7 @@ export function DashboardScreen() {
           setAuthState('unauthenticated')
           summaryRef.current = null
           setSummary(null)
+          setLastRefreshedAt(null)
         } else {
           setAuthState('authenticated')
           setError(summaryRef.current
@@ -159,8 +162,8 @@ export function DashboardScreen() {
                   <small>คน</small>
                 </p>
               </div>
-              <time dateTime={summary.updatedAt}>
-                อัปเดต {new Date(summary.updatedAt).toLocaleTimeString('th-TH', {
+              <time dateTime={lastRefreshedAt ?? summary.updatedAt}>
+                อัปเดตล่าสุด {new Date(lastRefreshedAt ?? summary.updatedAt).toLocaleTimeString('th-TH', {
                   hour: '2-digit',
                   minute: '2-digit',
                   second: '2-digit',

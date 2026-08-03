@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DashboardScreen } from './DashboardScreen'
 
@@ -13,6 +13,7 @@ vi.mock('../lib/repository', () => ({
 afterEach(() => {
   cleanup()
   loadDashboardSummaryMock.mockReset()
+  vi.useRealTimers()
 })
 
 describe('DashboardScreen kiosk layout', () => {
@@ -53,5 +54,32 @@ describe('DashboardScreen kiosk layout', () => {
     expect(within(categories[6]).getByText('ผู้อาจจะยังขาดความสมดุล')).toBeInTheDocument()
     expect(screen.queryByText('รอบที่เล่นทั้งหมด')).not.toBeInTheDocument()
     expect(screen.queryByText('Export CSV')).not.toBeInTheDocument()
+  })
+
+  it('requests fresh data every 30 seconds and shows the last successful refresh time', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-03T09:00:00.000Z'))
+    loadDashboardSummaryMock.mockResolvedValue({
+      totalPlayers: 1,
+      totalPlays: 1,
+      updatedAt: '2026-08-03T07:51:29.000Z',
+      csrfToken: 'csrf',
+      source: 'supabase',
+      characters: [],
+    })
+
+    render(<DashboardScreen />)
+    await act(async () => { await Promise.resolve() })
+
+    expect(loadDashboardSummaryMock).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('อัปเดตล่าสุด 16:00:00')).toBeInTheDocument()
+
+    await act(async () => {
+      vi.advanceTimersByTime(30_000)
+      await Promise.resolve()
+    })
+
+    expect(loadDashboardSummaryMock).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('อัปเดตล่าสุด 16:00:30')).toBeInTheDocument()
   })
 })
