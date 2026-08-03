@@ -15,13 +15,13 @@ beforeEach(() => {
 })
 
 describe('dashboard summary cache', () => {
-  it('reuses a recent result instead of querying the data source again', async () => {
+  it('queries the data source again after the previous request completes', async () => {
     const loader = vi.fn().mockResolvedValue(summary)
 
     await loadCachedDashboardSummary('event', loader)
     await loadCachedDashboardSummary('event', loader)
 
-    expect(loader).toHaveBeenCalledOnce()
+    expect(loader).toHaveBeenCalledTimes(2)
   })
 
   it('coalesces simultaneous refreshes into one data-source query', async () => {

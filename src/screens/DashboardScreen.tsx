@@ -138,7 +138,7 @@ export function DashboardScreen() {
     <main className="dashboard-screen">
       <section className="dashboard-video-panel" aria-label="วิดีโอประชาสัมพันธ์">
         <iframe
-          src="https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=1&controls=0&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
+          src="https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=0&controls=1&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
           title="วิดีโอประชาสัมพันธ์ SDGs"
           allow="autoplay; encrypted-media"
           referrerPolicy="strict-origin-when-cross-origin"
@@ -160,7 +160,11 @@ export function DashboardScreen() {
                 </p>
               </div>
               <time dateTime={summary.updatedAt}>
-                อัปเดต {new Date(summary.updatedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                อัปเดต {new Date(summary.updatedAt).toLocaleTimeString('th-TH', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                })}
               </time>
             </header>
 

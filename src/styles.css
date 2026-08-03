@@ -1003,7 +1003,7 @@ button:disabled { cursor: not-allowed; }
   height: 100%;
   display: block;
   border: 0;
-  pointer-events: none;
+  pointer-events: auto;
 }
 .dashboard-live-panel {
   position: relative;

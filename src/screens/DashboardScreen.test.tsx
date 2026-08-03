@@ -40,7 +40,7 @@ describe('DashboardScreen kiosk layout', () => {
     const video = screen.getByTitle('วิดีโอประชาสัมพันธ์ SDGs')
     expect(video).toHaveAttribute(
       'src',
-      'https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=1&controls=0&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0',
+      'https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=0&controls=1&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0',
     )
     expect(video).toHaveAttribute('allow', 'autoplay; encrypted-media')
     expect(video).not.toHaveAttribute('allowfullscreen')

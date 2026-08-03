@@ -33,7 +33,10 @@ export interface AdminSummaryResponse extends DashboardSummary {
 }
 
 export const loadDashboardSummary = async (): Promise<AdminSummaryResponse> => {
-  const response = await fetch('/api/admin/dashboard-summary', { credentials: 'include' })
+  const response = await fetch('/api/admin/dashboard-summary', {
+    credentials: 'include',
+    cache: 'no-store',
+  })
   if (response.status === 401) throw new Error('unauthorized')
   if (!response.ok) throw new Error(`dashboard returned ${response.status}`)
   return response.json() as Promise<AdminSummaryResponse>
