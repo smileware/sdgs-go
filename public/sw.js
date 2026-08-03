@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sustrend-mobile-v3'
+const CACHE_NAME = 'sustrend-mobile-v4'
 const PRECACHE = [
   '/',
   '/index.html',
@@ -26,6 +26,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return
 
+  const url = new URL(event.request.url)
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -35,6 +37,23 @@ self.addEventListener('fetch', (event) => {
           return response
         })
         .catch(() => caches.match('/index.html')),
+    )
+    return
+  }
+
+  // Card artwork is replaced in place, so always revalidate it instead of
+  // allowing an old response with the same URL to live in the cache forever.
+  if (url.pathname.startsWith('/assets/cards/')) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-cache' })
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone()
+            void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy))
+          }
+          return response
+        })
+        .catch(() => caches.match(event.request)),
     )
     return
   }

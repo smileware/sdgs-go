@@ -137,9 +137,12 @@ export function DashboardScreen() {
   return (
     <main className="dashboard-screen">
       <section className="dashboard-video-panel" aria-label="วิดีโอประชาสัมพันธ์">
-        <video autoPlay muted loop playsInline preload="auto" disablePictureInPicture>
-          <source src="/placeholder-video.mp4" type="video/mp4" />
-        </video>
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=1&controls=0&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
+          title="วิดีโอประชาสัมพันธ์ SDGs"
+          allow="autoplay; encrypted-media"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
       </section>
 
       <section className="dashboard-live-panel" aria-live="polite">

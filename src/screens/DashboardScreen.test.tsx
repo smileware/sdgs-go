@@ -37,12 +37,13 @@ describe('DashboardScreen kiosk layout', () => {
     render(<DashboardScreen />)
 
     await waitFor(() => expect(screen.getByText('มีผู้ร่วมเล่นสะสมทั้งหมด')).toBeInTheDocument())
-    const videoPanel = screen.getByLabelText('วิดีโอประชาสัมพันธ์')
-    const video = videoPanel.querySelector('video') as HTMLVideoElement
-    expect(video.autoplay).toBe(true)
-    expect(video.loop).toBe(true)
-    expect(video.muted).toBe(true)
-    expect(video.querySelector('source')).toHaveAttribute('src', '/placeholder-video.mp4')
+    const video = screen.getByTitle('วิดีโอประชาสัมพันธ์ SDGs')
+    expect(video).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/Q-Do10JDkt0?autoplay=1&mute=1&controls=0&loop=1&playlist=Q-Do10JDkt0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&rel=0',
+    )
+    expect(video).toHaveAttribute('allow', 'autoplay; encrypted-media')
+    expect(video).not.toHaveAttribute('allowfullscreen')
 
     expect(screen.getByText('22')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'จำนวนผู้ร่วมเล่นในแต่ละหมวดหมู่' })).toBeInTheDocument()
