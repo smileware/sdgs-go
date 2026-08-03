@@ -2,6 +2,7 @@
 .vercel
 .env*
 .admin-credentials.local.txt
+public/sdgs-video.mp4
 google-apps-script/script-properties.local.txt
 node_modules
 dist

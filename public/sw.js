@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sustrend-mobile-v4'
+const CACHE_NAME = 'sustrend-mobile-v5'
 const PRECACHE = [
   '/',
   '/index.html',
@@ -27,6 +27,13 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return
 
   const url = new URL(event.request.url)
+
+  // API responses can contain live or authenticated data and must never be
+  // served from the offline asset cache.
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }))
+    return
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
